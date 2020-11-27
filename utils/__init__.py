@@ -1,6 +1,9 @@
+import asyncio
 import logging
 from twisted.internet import reactor
 import sys
+
+from twisted.internet.defer import Deferred
 from twisted.python import log
 
 class LevelFileLogObserver(log.FileLogObserver):
@@ -89,3 +92,11 @@ def delay_import(modules, delay=0.1):
                 __import__(modules)
 
     reactor.callLater(delay, import_, modules)
+
+class asDeferred(object):
+    def __init__(self, func):
+        self.func = func
+
+    def __call__(self, *args, **kwargs) -> Deferred:
+        return Deferred.fromFuture(asyncio.ensure_future(self.func(*args,**kwargs)))
+    

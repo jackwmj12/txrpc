@@ -125,7 +125,7 @@ class Service(object):
                 Log.err('the command '+str(targetKey)+' not Found on service in ' + self._name)
                 return None
             if targetKey not in self.unDisplay:
-                Log.debug("call method %s on service[single]"%target.__name__)
+                Log.debug("RPC : <remote> call method <%s> on service[single]"%target.__name__)
             defer_data = target(*args,**kw)
             if not defer_data:
                 return None
@@ -149,7 +149,7 @@ class Service(object):
             if not target:
                 Log.err('the command '+str(targetKey)+' not Found on service in ' + self._name)
                 return None
-            Log.debug("call method %s on service[parallel]"%target.__name__)
+            Log.debug("RPC : <remote> call method <%s> on service[parallel]"%target.__name__)
             d = threads.deferToThread(target,*args,**kw)
         finally:
             self._lock.release()

@@ -63,18 +63,33 @@ class RemoteObject(object):
         self._reference.addService(service)
         
     def takeProxy(self):
-        '''向远程服务端发送代理通道对象
+        '''
+        向远程服务端发送代理通道对象
         '''
         deferedRemote = self._factory.getRootObject()
-        deferedRemote.addCallback(callRemote,'takeProxy',self._name,self._reference)
+        deferedRemote.addCallback(_callRemote,'takeProxy',self._name,self._reference).addCallback(self.doWhenConnect)
     
     def callRemote(self,commandId,*args,**kw):
-        '''远程调用'''
-        Log.debug("remote:{} 远程调用:{} ".format(self.getName(),commandId))
+        '''
+        远程调用
+        '''
+        Log.debug("RPC : call <remote> method <{}>".format(commandId))
         deferedRemote = self._factory.getRootObject()
-        return deferedRemote.addCallback(callRemote,'callTarget',commandId,*args,**kw)
-
-def callRemote(obj:RemoteObject,funcName:str,*args,**kw):
+        return deferedRemote.addCallback(_callRemote,'callTarget',commandId,*args,**kw)
+    
+    def doWhenConnect(self,ign=None):
+        '''
+        :param
+        '''
+        self._doWhenConnect()
+        
+    def _doWhenConnect(self):
+        '''
+        :param
+        '''
+    
+    
+def _callRemote(obj:RemoteObject,funcName:str,*args,**kw):
     '''远程调用
     @param funcName: str 远程方法
     '''

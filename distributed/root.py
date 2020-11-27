@@ -64,13 +64,21 @@ class PBRoot(pb.Root):
         """
         当node节点连接时的处理
         """
-        Log.msg("{} connected".format(name))
-
+        try:
+            Log.debug("node [%s] connect" % name)
+            # del GlobalObject().remote[childId]
+        except Exception as e:
+            Log.err(str(e))
+            
     def doChildLostConnect(self,childId):
         """
         当node节点连接时的处理
         """
-        Log.debug("{} lost connect".format(childId))
+        try:
+            Log.debug("node [%s] lose" % childId)
+            # del GlobalObject().remote[childId]
+        except Exception as e:
+            Log.err(str(e))
     
     # def addChild(self):
     #     self.childsmanager.addChild

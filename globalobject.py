@@ -22,7 +22,6 @@ Created on 2019-11-22
 '''
 import os
 from typing import Dict, List, Any
-
 from distributed.node import RemoteObject
 from distributed.root import PBRoot
 from service.services import Service
@@ -73,14 +72,19 @@ class GlobalObject(metaclass=Singleton):
         else:
             raise RemoteUnFindedError
 
-remoteservice = Service("SERVICE")
+def rootserviceHandle(target):
+    """
+    将服务加入根节点
+    """
+    GlobalObject().root.service.mapTarget(target)
 
+remoteservice = Service("SERVICE")
 class remoteserviceHandle:
     """
     该装饰器类，使用方法：
         def func:
             ...
-        绑定成功后，远端节点 gate 可以调用 该 func 方法
+        绑定成功后，root 可以调用 该 remote func 方法
     """
     def __init__(self,remotename):
         """
@@ -93,12 +97,11 @@ class remoteserviceHandle:
         GlobalObject().getRemote(self.remotename)._reference._service.mapTarget(target)
 
 localservice = Service('localservice')
-
 def localserviceHandle(target):
     '''
-    创建gate本地服务装饰器
+    创建本地服务装饰器
     被该装饰器装饰的函数
-    可以且仅可以被gate端口使用
+    可以且仅可以被本地使用
     @param target: func Object
     '''
     localservice.mapTarget(target)

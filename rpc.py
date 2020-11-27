@@ -9,51 +9,12 @@ from globalobject import GlobalObject
 from service import services
 from utils import delay_import
 
-
-def callRemote(remote_name:str, commandId, *args,**kw):
-    '''
-
-    :param remoteObj:
-    :param commandId
-    :param args
-    :param kw
-    :return:
-    '''
-    # raise Exception("callRemote method is not realize")
-    # remoteObj.callRemote(commandId,*args,**kw)
-    return GlobalObject().getRemote(remote_name).callRemote(commandId,*args,**kw)
-
-def _doChildConnect(name, transport):
-    '''
-    :return
-    '''
-    try:
-        Log.info("node [%s] connect" % name)
-        # del GlobalObject().remote[childId]
-    except Exception as e:
-        Log.info(str(e))
-
-
-def _doChildLostConnect(childId):
-    """
-        当节点与master断开时master的回调
-    """
-    try:
-        Log.info("node [%s] lose" % childId)
-        # del GlobalObject().remote[childId]
-    except Exception as e:
-        Log.info(str(e))
-
-
 class RPC():
     
     def __init__(self):
         '''
         :return
         '''
-        if GlobalObject().root:
-            GlobalObject().root.doChildConnect = _doChildConnect
-            GlobalObject().root.doChildLostConnect = _doChildLostConnect
     
     def run(self):
         '''
@@ -82,10 +43,6 @@ class RPC():
         remote = RemoteObject(name)
         remote.connect((host, port))
         GlobalObject().remote[target_name] = remote
-        # if not GlobalObject().remote[remote_name]:
-        #     GlobalObject().remote[remote_name] = [remote]
-        # else:
-        #     GlobalObject().remote[remote_name].append(remote)
     
     def setDoWhenStop(self, handler):
         '''
@@ -104,12 +61,7 @@ class RPC():
         :return
         '''
         GlobalObject().reloadhandler = handler
-    
-    def setDoWhenChildConnect(self,handler):
-        GlobalObject().root.doChildConnect = handler
-    
-    def setDoWhenChildLostConnect(self,handler):
-        GlobalObject().root.doChildLostConnect = handler
+
 
 class RPCServer(RPC):
     '''
@@ -134,7 +86,19 @@ class RPCServer(RPC):
         
         if service_path:
             self.importService(service_path.split(","))
+    
+    @staticmethod
+    def callRemote(remoteName:str,functionName:str,*args,**kwargs):
+        '''
+        :param
+        '''
+        return GlobalObject().root.callChildByName(remoteName, functionName,*args,**kwargs)
 
+    def setDoWhenChildConnect(self,handler):
+        GlobalObject().root.doChildConnect = handler
+    
+    def setDoWhenChildLostConnect(self,handler):
+        GlobalObject().root.doChildLostConnect = handler
 
 class RPCClient(RPC):
     '''
@@ -147,9 +111,28 @@ class RPCClient(RPC):
         '''
         super().__init__()
         
-        Log.debug("本地节点{name} -> 远程节点:{target_name}".format(name=name,target_name=target_name))
-        
-        self.connectRemote(name=name,target_name=target_name,host=host, port=port)
-        
+        self.clientConnect(name,target_name, host, port, service_path)
+
+    @staticmethod
+    def callRemote(remoteName: str, functionName: str, *args, **kwargs):
+        '''
+        :param
+        '''
+        return GlobalObject().getRemote(remoteName).callRemote(functionName,*args,**kwargs)
+    
+    def setDoWhenConnect(self, serverName : str,handler):
+        '''
+        :param
+        '''
+        GlobalObject().remote[serverName]._doWhenConnect = handler
+    
+    def clientConnect(self,name: str,target_name:str, host: str, port: int, service_path: str=None):
+        '''
+        :param
+        '''
+        Log.debug("local<{name}> -> remote:<{target_name}>".format(name=name, target_name=target_name))
+
+        self.connectRemote(name=name, target_name=target_name, host=host, port=port)
+
         if service_path:
             self.importService(service_path.split(","))

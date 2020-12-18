@@ -25,7 +25,7 @@ from twisted.internet.defer import Deferred
 from twisted.python import log
 from twisted.spread import pb
 from distributed.child import Child
-from distributed.manager import ChildsManager
+from distributed.manager import ChildrenManager
 
 from service.services import Service
 from utils import Log
@@ -36,7 +36,7 @@ class BilateralBroker(pb.Broker):
     def connectionLost(self, reason):
         clientID = self.transport.sessionno
         # Log.msg("node [%d] lose"%clientID)
-        self.factory.root.dropChildSessionId(clientID)
+        self.factory.root.dropChildById(clientID)
         pb.Broker.connectionLost(self, reason)
 
 class BilateralFactory(pb.PBServerFactory):
@@ -47,12 +47,12 @@ class BilateralFactory(pb.PBServerFactory):
 class PBRoot(pb.Root):
     '''PB 代理服务器'''
     
-    def __init__(self,dnsmanager = ChildsManager()):
+    def __init__(self,dnsmanager = ChildrenManager()):
         '''初始化根节点
         '''
-        self._current_id = 0
-        self.childsmanager : ChildsManager = dnsmanager
-        self.service: Service
+        # self._current_id = 0
+        self.childsmanager : ChildrenManager = dnsmanager
+        self.service: Service = None
         
     def addServiceChannel(self,service : Service):
         '''添加服务通道
@@ -66,7 +66,6 @@ class PBRoot(pb.Root):
         """
         try:
             Log.debug("node [%s] connect" % name)
-            # del GlobalObject().remote[childId]
         except Exception as e:
             Log.err(str(e))
             
@@ -80,26 +79,20 @@ class PBRoot(pb.Root):
         except Exception as e:
             Log.err(str(e))
     
-    # def addChild(self):
-    #     self.childsmanager.addChild
-    
     def dropChild(self,*args,**kw):
         '''删除子节点记录'''
         self.childsmanager.dropChild(*args,**kw)
         
-    def dropChildByID(self,childId):
+    def dropChildById(self,childId):
         '''删除子节点记录'''
-        self.doChildLostConnect(childId)
-        self.childsmanager.dropChildByID(childId)
-        
-    def dropChildSessionId(self, session_id):
-        '''删除子节点记录'''
-        child = self.childsmanager.getChildBYSessionId(session_id)
+        child = self.childsmanager.getChildById(childId)
         if not child:
             return
-        child_id = child._id
-        self.doChildLostConnect(child_id)
-        self.childsmanager.dropChildByID(child_id)
+        self.doChildLostConnect(child.getId())
+        self.childsmanager.dropChildById(child.getId())
+        # Log.debug(self.childsmanager._children.get("client").children)
+        # Log.debug(self.childsmanager._children.get("client").hand)
+        # Log.debug(self.childsmanager._children.get("client").handCur)
 
     def callChild(self,key,*args,**kw)->Deferred:
         '''调用子节点的接口
@@ -121,8 +114,11 @@ class PBRoot(pb.Root):
         @param addr: (hostname,port)hostname 根节点的主机名,根节点的端口
         '''
         Log.debug('node [%s] takeProxy ready'%(name))
-        child = Child(name,name)
+        child = Child(transport.broker.transport.sessionno,name)
         self.childsmanager.addChild(child)
+        # Log.debug(self.childsmanager._children.get("client").children)
+        # Log.debug(self.childsmanager._children.get("client").hand)
+        # Log.debug(self.childsmanager._children.get("client").handCur)
         child.setTransport(transport)
         self.doChildConnect(name, transport)
 

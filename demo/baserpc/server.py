@@ -20,7 +20,8 @@ def doChildConnect(name,transport):
     '''
     Log.debug("{} connected".format(name))
     
-    reactor.callLater(1,fun)
+    for i in range(1000):
+        reactor.callLater(i*2 + 1,fun)
     
     
 def doChildLostConnect(childId):

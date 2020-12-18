@@ -39,7 +39,6 @@ class GlobalObject(metaclass=Singleton):
         self.remote_map : Dict[str:Dict[str,Any[str,int]]] = {}
         self.root : PBRoot = None
         
-        self.connecthandler = None #连接远程节点触发函数（暂时不需要）
         self.stophandler = None #停止指令触发函数（暂时不需要）
         self.reloadhandler = None #重载指令触发函数（暂时不需要）
         self.starthandler = None #开始指令触发函数

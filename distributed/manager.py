@@ -20,13 +20,75 @@ Created on 2019-11-22
  @desc：
     root节点
 '''
+from typing import Dict, List, Union
 
+from twisted.python import log
 from zope.interface import Interface, implementer
-
+import numpy as np
+from distributed.child import Child
 from utils import Log
 
-
-class _ChildsManager(Interface):
+class Children():
+    def __init__(self, name):
+        '''
+        初始化子节点对象
+        '''
+        self.name = name
+        self.hand : List[int] = []
+        self.children : List[Child] = []
+        self.handCur : int = 0
+    
+    def append(self,child : Child):
+        '''
+        :param
+        '''
+        if child not in self.children:
+            self.children.append(child)
+            self.handCur = 0
+            hand = [child for _ in range(child.getWeight())]
+            self.hand.extend(hand)
+            np.random.shuffle(self.hand)  # 洗牌
+        else:
+            log.err("append failed , node %s is already exist"%child.getName())
+    
+    def remove(self,child : Child):
+        '''
+        :param
+        '''
+        if child in self.children:
+            self.children.remove(child)
+            self.handCur = 0
+            self.hand = [item for item in self.hand if item != child] #
+            np.random.shuffle(self.hand)  # 洗牌
+        else:
+            log.err("remove failed , node %s is not exist"%child.getName())
+    
+    def shuffle(self):
+        '''
+        :param
+        '''
+        np.random.shuffle(self.hand)  # 洗牌
+        self.handCur = 0
+    
+    def getChild(self):
+        '''
+        
+        :return:
+        '''
+        if self.children and self.hand:
+            if self.handCur >= len(self.hand) :
+                self.handCur = 0
+                
+            Log.debug(self.hand)
+            Log.debug(self.handCur)
+            Log.debug(self.hand[self.handCur])
+            
+            child = self.hand[self.handCur]
+            self.handCur += 1
+            return child
+        return None
+        
+class _ChildrenManager(Interface):
     '''节点管理器接口'''
     
     def __init__(self):
@@ -63,85 +125,111 @@ class _ChildsManager(Interface):
         """根据session_id删除child节点
         """
 
-@implementer(_ChildsManager)
-class ChildsManager(object):
+@implementer(_ChildrenManager)
+class ChildrenManager(object):
     '''子节点管理器'''
     
     def __init__(self):
         '''初始化子节点管理器'''
-        self._childs = {}
+        self._childrens : Dict[str:Children] = {}
         
-    def getChildById(self,childId):
-        '''根据节点的ID获取节点实例'''
-        return self._childs.get(childId)
+    def getChildren(self,name) -> Union[Children,None]:
+        '''
+        :param
+        '''
+        children : Children = self._childrens.get(name)
+        if children :
+            return children
+        return None
     
-    def getChildByName(self,childname):
-        '''根据节点的名称获取节点实例'''
-        for key,child in self._childs.items():
-            if child.getName() == childname:
-                return self._childs[key]
+    def getChildById(self,childId) -> Union[None,Child]:
+        '''
+        根据节点的ID获取节点实例
+        '''
+        for children in self._childrens.values():
+            for child in children.children:
+                if child.getId() == childId:
+                    return child
         return None
         
-    def addChild(self,child):
+    def getChildByName(self,name) -> Union[None,Child]:
+        '''
+        根据节点的名称获取节点实例
+        '''
+        if name:
+            children : Children = self._childrens.get(name)
+            if children:
+                return children.getChild()
+        return None
+        
+    def addChild(self,child :Child):
         '''
         添加一个child节点
         @param child: Child object
         '''
-        key = child._id
-        if key in self._childs.keys():
-            raise "child node %s exists"% key
-        self._childs[key] = child
+        name = child.getName()
+        # log.msg("node %s is connecting"%name)
+        children : Children= self._childrens.get(name)
+        if children:
+            children.append(child)
+        else:
+            self._childrens[name] = Children(name)
+            self._childrens[name].append(child)
+        # log.msg("node %s is connected" % name)
+        
+    def handShuffle(self,name):
+        '''
+        :param
+        '''
+        children : Children= self.childrens.get(name)
+        if children:
+            children.shuffle()
+        else:
+            log.err("child nodes %s is not exist"%name)
         
     def dropChild(self,child):
         '''
         删除一个child 节点
         @param child: Child Object 
         '''
-        key = child._id
-        try:
-            del self._childs[key]
-        except Exception as e:
-            Log.err(str(e))
+        children : Children = self._childrens.get(child.getName())
+        if children:
+            children.remove(child)
+        else:
+            log.err("nodes %s is not exist "%child.getName())
             
-    def dropChildByID(self,childId):
-        '''删除一个child 节点
+    def dropChildById(self,childId):
+        '''
+        删除一个child 节点
         @param childId: Child ID 
         '''
-        try:
-            del self._childs[childId]
-        except Exception as e:
-            Log.info(str(e))
+        child :Child = self.getChildById(childId)
+        if child:
+            self.dropChild(child)
+        else:
+            log.err("node[%s] is not exist"%childId)
             
-    def callChild(self,childId,*args,**kw):
+    def callChildById(self,childId,*args,**kw):
         '''调用子节点的接口
         @param childId: int 子节点的id
         '''
-        child = self._childs.get(childId,None)
+        child = self.getChildById(childId=childId)
         if not child:
             Log.err("child %s doesn't exists"%childId)
             return None
         return child.callbackChild(*args,**kw)
     
-    def callChildByName(self,childname,*args,**kw):
+    def callChildByName(self,name,*args,**kw):
         '''调用子节点的接口
-        @param childname: str 子节点的名称
+        @param name: str 子节点的名称
         '''
-        Log.debug("调用服务，请求：{} 服务".format(childname))
+        Log.debug("调用服务，请求：{} 服务".format(name))
         Log.debug("参数为：{}".format(args))
 
-        child = self.getChildByName(childname)
+        child = self.getChildByName(name)
         
         if not child:
-            Log.err("child %s doesn't exists"%childname)
+            Log.err("child %s doesn't exists"%name)
             return None
         return child.callbackChild(*args,**kw)
-    
-    def getChildBYSessionId(self, session_id):
-        """根据sessionID获取child节点信息
-        """
-        for child in self._childs.values():
-            if child._transport.broker.transport.sessionno == session_id:
-                return child
-        return None
-
         

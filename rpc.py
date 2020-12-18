@@ -142,15 +142,15 @@ class RPCClient(RPC):
     :return
     '''
     
-    def __init__(self, name: str,target_name:str, host: str, port: int, service_path: str=None):
+    def __init__(self, name: str,target_name:str, host: str, port: int, service_path: str=None,weight=10):
         '''
         :return
         '''
         super().__init__()
         
-        self.clientConnect(name,target_name, host, port, service_path)
+        self.clientConnect(name,target_name, host, port, service_path,weight)
 
-    def connectRemote(self, name: str, target_name: str, host: str, port: int):
+    def connectRemote(self, name: str, target_name: str, host: str, port: int,weight:int=10):
         '''
             控制 节点 连接 另一个节点
             :param name:  当前节点名称
@@ -163,6 +163,7 @@ class RPCClient(RPC):
         assert target_name != None, "target_name 不能为空"
     
         remote = RemoteObject(name)
+        remote.setWeight(weight)
         remote.connect((host, port))
         GlobalObject().remote[target_name] = remote
     
@@ -172,13 +173,13 @@ class RPCClient(RPC):
         '''
         GlobalObject().remote[serverName]._doWhenConnect = handler
     
-    def clientConnect(self,name: str,target_name:str, host: str, port: int, service_path: str=None):
+    def clientConnect(self,name: str,target_name:str, host: str, port: int, service_path: str=None,weight=10):
         '''
         :param
         '''
         Log.debug("local<{name}> -> remote:<{target_name}>".format(name=name, target_name=target_name))
 
-        self.connectRemote(name=name, target_name=target_name, host=host, port=port)
+        self.connectRemote(name=name, target_name=target_name, host=host, port=port,weight=weight)
 
         if service_path:
             self.importService(service_path.split(","))

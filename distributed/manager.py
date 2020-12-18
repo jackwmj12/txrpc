@@ -79,8 +79,8 @@ class Children():
             if self.handCur >= len(self.hand) :
                 self.handCur = 0
                 
-            Log.debug(self.hand)
-            Log.debug(self.handCur)
+            # Log.debug(self.hand)
+            # Log.debug(self.handCur)
             Log.debug(self.hand[self.handCur])
             
             child = self.hand[self.handCur]

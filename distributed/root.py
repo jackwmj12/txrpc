@@ -108,13 +108,14 @@ class PBRoot(pb.Root):
         '''
         return self.childsmanager.callChildByName(childname,*args,**kw)
     
-    def remote_takeProxy(self,name,transport):
+    def remote_takeProxy(self,name,weight,transport):
         '''
         设置代理通道
         @param addr: (hostname,port)hostname 根节点的主机名,根节点的端口
         '''
         Log.debug('node [%s] takeProxy ready'%(name))
         child = Child(transport.broker.transport.sessionno,name)
+        child.setWeight(weight)
         self.childsmanager.addChild(child)
         # Log.debug(self.childsmanager._children.get("client").children)
         # Log.debug(self.childsmanager._children.get("client").hand)

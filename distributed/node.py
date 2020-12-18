@@ -36,10 +36,11 @@ class RemoteObject(object):
         @param rootaddr: 根节点服务器地址
         '''
         self._name = name
+        self._weight = 10
         self._factory = pb.PBClientFactory() # pb的客户端，客户端可以执行server端的remote方法
         self._reference = ProxyReference()  # 创建代理通道，该通道包含添加服务，代理发送数据功能
         self._addr = None
-        
+    
     def setName(self,name):
         '''设置节点的名称'''
         self._name = name
@@ -47,6 +48,12 @@ class RemoteObject(object):
     def getName(self):
         '''获取节点的名称'''
         return self._name
+        
+    def getWeight(self):
+        return self._weight
+    
+    def setWeight(self,weight):
+        self._weight = weight
         
     def connect(self,addr):
         '''初始化远程调用对象'''
@@ -61,13 +68,13 @@ class RemoteObject(object):
     def addServiceChannel(self,service):
         '''设置引用对象'''
         self._reference.addService(service)
-        
+    
     def takeProxy(self):
         '''
         向远程服务端发送代理通道对象
         '''
         deferedRemote = self._factory.getRootObject()
-        deferedRemote.addCallback(_callRemote,'takeProxy',self._name,self._reference).addCallback(self.doWhenConnect)
+        deferedRemote.addCallback(_callRemote,'takeProxy',self._name,self._weight,self._reference).addCallback(self.doWhenConnect)
     
     def callRemote(self,commandId,*args,**kw):
         '''

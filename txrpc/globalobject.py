@@ -24,6 +24,7 @@ from typing import Dict, List, Any
 from txrpc.distributed.node import RemoteObject
 from txrpc.distributed.root import PBRoot
 from txrpc.service.services import Service
+from txrpc.utils import logger
 from txrpc.utils.singleton import Singleton
 
 class RemoteUnFindedError(Exception):
@@ -38,8 +39,9 @@ class GlobalObject(metaclass=Singleton):
         self.remote_map : Dict[str:Dict[str,Any[str,int]]] = {}
         self.root : PBRoot = None
         
-        self.stophandler = None #停止指令触发函数（暂时不需要）
-        self.reloadhandler = None #重载指令触发函数（暂时不需要）
+        self.stophandler = None #停止指令触发函数
+        self.reloadhandler = None #重载指令触发函数
+        
         self.starthandler = None #开始指令触发函数
         
     def get_config_from_object(self,obj):
@@ -47,18 +49,6 @@ class GlobalObject(metaclass=Singleton):
             if key.isupper():
                 self.config[key] = getattr(obj, key)
         return self.config
-
-    # def getRemote(self,remoteNmae:str)->RemoteObject:
-    #     '''
-    #
-    #     :param remoteNmae:
-    #     :return:
-    #     '''
-    #     remoteObj = self.remote.get(remoteNmae)
-    #     if remoteObj:
-    #         return remoteObj[0]
-    #     else:
-    #         raise RemoteUnFindedError
     
     def getRemote(self,remote_name:str)->RemoteObject:
         '''
@@ -76,7 +66,6 @@ def rootserviceHandle(target):
     """
     GlobalObject().root.service.mapTarget(target)
 
-remoteservice = Service("SERVICE")
 class remoteserviceHandle:
     """
     该装饰器类，使用方法：
@@ -92,6 +81,7 @@ class remoteserviceHandle:
     def __call__(self,target):
         """
         """
+        logger.debug(f"remoteserviceHandle {self.remotename}")
         GlobalObject().getRemote(self.remotename)._reference._service.mapTarget(target)
 
 localservice = Service('localservice')
@@ -103,3 +93,4 @@ def localserviceHandle(target):
     @param target: func Object
     '''
     localservice.mapTarget(target)
+

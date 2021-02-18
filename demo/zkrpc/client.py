@@ -8,7 +8,7 @@ from txrpc.rpc import RPCClient
 
 logger.init()
 
-client = RPCClient(
+client = RPCClient().clientConnect(
     name="client",
     target_name="server",
     host="127.0.0.1",

@@ -32,11 +32,11 @@ class RPC():
         '''
         reactor.run()
     
-    def importService(self, filePath: List[str]):
+    def registerService(self, service_path : str):
         '''
         :return
         '''
-        delay_import(filePath)
+        delay_import(service_path.split(","))
 
     def log_init(self):
         '''
@@ -122,7 +122,7 @@ class RPCServer(RPC):
         GlobalObject().root.addServiceChannel(service)
         
         if service_path:
-            self.importService(service_path.split(","))
+            self.registerService(service_path)
 
     def setDoWhenChildConnect(self,handler):
         GlobalObject().root.doChildConnect = handler
@@ -142,21 +142,19 @@ class RPCClient(RPC):
     :return
     '''
     
-    def __init__(self, name: str,target_name:str, host: str, port: int, service_path: str=None,weight=10):
+    def __init__(self):
         '''
         :return
         '''
         super().__init__()
-        
-        self.clientConnect(name,target_name, host, port, service_path,weight)
 
-    def connectRemote(self, name: str, target_name: str, host: str, port: int,weight:int=10):
+    def _connectRemote(self, name: str, target_name: str, host: str, port: int,weight:int=10):
         '''
             控制 节点 连接 另一个节点
             :param name:  当前节点名称
             :param remote_name:  需要连接的节点名称
             :return:
-            '''
+        '''
         assert name != None, "remote 名称不能为空"
         assert port != None, "port 不能为空"
         assert host != None, "host 不能为空"
@@ -179,10 +177,12 @@ class RPCClient(RPC):
         '''
         logger.debug("local<{name}> -> remote:<{target_name}>".format(name=name, target_name=target_name))
 
-        self.connectRemote(name=name, target_name=target_name, host=host, port=port,weight=weight)
+        self._connectRemote(name=name, target_name=target_name, host=host, port=port,weight=weight)
 
         if service_path:
-            self.importService(service_path.split(","))
+            self.registerService(service_path)
+        
+        return self
 
     @staticmethod
     def callRemote(remoteName: str, functionName: str, *args, **kwargs):

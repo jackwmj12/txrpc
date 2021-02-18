@@ -1,4 +1,5 @@
 import asyncio
+from imp import reload
 
 from typing import Any
 
@@ -16,20 +17,28 @@ def delay_import(modules, delay=0.1):
     :param delay float 延时时间（s）
     '''
     
-    def import_(modules):
+    def __import(modules):
         ''':param
         '''
         logger.debug("即将导入模块:{modules}".format(modules=modules))
         if modules:
             if isinstance(modules, (list, tuple)):
                 for module in modules:
-                    __import__(module)
+                    if module not in sys.modules:
+                        __import__(module)
+                    else:
+                        reload(sys.modules[module])
             elif isinstance(modules, str):
-                __import__(modules)
-
-    from twisted.internet import reactor
+                if modules not in sys.modules:
+                    __import__(modules)
+                else:
+                    reload(sys.modules[modules])
     
-    reactor.callLater(delay, import_, modules)
+    if delay != 0:
+        from twisted.internet import reactor
+        reactor.callLater(delay, __import, modules)
+    else:
+        __import(modules)
 
 class asDeferred(object):
     def __init__(self, func):

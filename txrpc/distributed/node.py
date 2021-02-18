@@ -94,14 +94,10 @@ class RemoteObject(object):
         '''
         :param
         '''
-    
-    
+
 def _callRemote(obj:RemoteObject,funcName:str,*args,**kw):
     '''远程调用
     @param funcName: str 远程方法
     '''
     return obj.callRemote(funcName, *args,**kw)
-    
-    
-    
     

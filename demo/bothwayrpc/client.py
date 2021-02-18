@@ -37,5 +37,5 @@ server = RPCServer("server",9000,service_path="demo.baserpc.app.serverapp")
 server.setDoWhenChildConnect(doChildConnect)
 server.setDoWhenChildLostConnect(doChildLostConnect)
 
-client = RPCClient(name="client",target_name="server",host="127.0.0.1",port=10000,service_path="demo.baserpc.app.clientapp",weight=10)
+client = RPCClient().clientConnect(name="client",target_name="server",host="127.0.0.1",port=10000,service_path="demo.baserpc.app.clientapp",weight=10)
 client.run()

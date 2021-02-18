@@ -36,9 +36,9 @@ def register_rpc(app: FastAPI) -> None:
         
         global client
         
-        client = RPCClient(name="client", target_name="server", host="127.0.0.1", port=10000,
+        client = RPCClient().clientConnect(name="client", target_name="server", host="127.0.0.1", port=10000,
                   service_path="demo.fastapi.client.app.clientapp", weight=10)
-
+        
         from txrpc.utils import logger
         logger.init()
         

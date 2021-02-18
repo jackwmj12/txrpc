@@ -20,9 +20,12 @@ Created on 2019-11-22
  @desc：
     服务类封装
 '''
-
+import asyncio
+import inspect
 import threading
 from twisted.internet import defer,threads
+from twisted.internet.defer import Deferred
+
 from utils import logger
 
 
@@ -131,6 +134,10 @@ class Service(object):
                 return None
             if isinstance(defer_data,defer.Deferred):
                 return defer_data
+            elif inspect.isawaitable(defer_data):
+                return Deferred.fromFuture(asyncio.ensure_future(defer_data))
+            elif asyncio.coroutines.iscoroutine(defer_data):
+                return Deferred.fromCoroutine(defer_data)
             d = defer.Deferred()
             d.callback(defer_data)
         finally:

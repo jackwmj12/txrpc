@@ -3,10 +3,9 @@ import os
 import socket
 import sys
 
-from twisted.python import log
 from twisted.python.logfile import DailyLogFile
 
-from utils import Log, LevelFileLogObserver
+from utils.logger import LevelFileLogObserver
 from typing import List, Dict, Any
 
 from twisted.internet import reactor
@@ -15,7 +14,8 @@ from distributed.node import RemoteObject
 from distributed.root import BilateralFactory, PBRoot
 from globalobject import GlobalObject
 from service import services
-from utils import delay_import
+from utils import delay_import, logger
+
 
 class RPC():
     
@@ -48,27 +48,27 @@ class RPC():
         
         if GlobalObject().config["LOG_PATH"]:
         
-            Log.msg("初始化日志路径为：{}".format(GlobalObject().config["LOG_PATH"]))
+            logger.msg("初始化日志路径为：{}".format(GlobalObject().config["LOG_PATH"]))
     
             if os.path.isdir(GlobalObject().config.get("LOG_PATH")) == False:  # 设置生产日志路径
                 os.mkdir(GlobalObject().config.get("LOG_PATH"))
-            log.FileLogObserver.timeFormat = '%Y-%m-%d %H:%M:%S'
+            logger.FileLogObserver.timeFormat = '%Y-%m-%d %H:%M:%S'
 
             f = DailyLogFile(".".join([GlobalObject().config.get("LOG_NAME","txrpc").lower() , "log"]), GlobalObject().config.get("LOG_PATH"))
-            Log.msg("当前为常规模式，设置日志路径，且将日志运行于每日分割模式")
+            logger.msg("当前为常规模式，设置日志路径，且将日志运行于每日分割模式")
         else:
             f = sys.stdout
             # f = DailyLogFile(self.name.lower() + ".log", GlobalObject().config.get("LOG_PATH"))
-            Log.msg("当前未输入日志路径，设置日志为屏幕输出")
+            logger.msg("当前未输入日志路径，设置日志为屏幕输出")
            
         log_level = GlobalObject().config.get("LOG_LEVEL", "DEBUG")
     
         if log_level.upper() == "DEBUG":
-            logger = LevelFileLogObserver(f, logging.DEBUG)
+            log_observer = LevelFileLogObserver(f, logging.DEBUG)
         else:
-            logger = LevelFileLogObserver(f, logging.INFO)
+            log_observer = LevelFileLogObserver(f, logging.INFO)
     
-        log.startLoggingWithObserver(logger.emit, setStdout=False)
+        logger.startLoggingWithObserver(log_observer.emit, setStdout=False)
 
     def twisted_init(self):
         '''
@@ -78,7 +78,7 @@ class RPC():
     
         socket.setdefaulttimeout(GlobalObject().config.get("SOCKET_TIME_OUT", 60))
     
-        Log.msg("初始化socket超时时间为：{}".format(GlobalObject().config.get("SOCKET_TIME_OUT", 60)))
+        logger.msg("初始化socket超时时间为：{}".format(GlobalObject().config.get("SOCKET_TIME_OUT", 60)))
     
         reactor.suggestThreadPoolSize(GlobalObject().config.get("TWISTED_THREAD_POOL", 8))  # 设置线程池数量
     
@@ -177,7 +177,7 @@ class RPCClient(RPC):
         '''
         :param
         '''
-        Log.debug("local<{name}> -> remote:<{target_name}>".format(name=name, target_name=target_name))
+        logger.debug("local<{name}> -> remote:<{target_name}>".format(name=name, target_name=target_name))
 
         self.connectRemote(name=name, target_name=target_name, host=host, port=port,weight=weight)
 
@@ -191,31 +191,8 @@ class RPCClient(RPC):
         '''
         return GlobalObject().getRemote(remoteName).callRemote(functionName, *args, **kwargs)
 
-
-# class RPCMaster(RPC):
-#     '''
-#     :param
-#     '''
-#     def __init__(self):
-#         super().__init__()
-#         self.services = {}
-#
-#     def setServiceByName(self,serviceName : str,serviceValue):
-#         '''
-#         :param
-#         '''
-#         self.services[serviceName] = serviceValue
-#
-#     def getServiceByName(self,serviceName : str):
-#         '''
-#         :param
-#         '''
-#         return self.services.get(serviceName,None)
-#
-#     def deleteServcieByName(self,serviceName : str):
-#         '''
-#         :param
-#         '''
-#         del self.services[serviceName]
-#
-#
+def run():
+    '''
+    :return
+    '''
+    reactor.run()

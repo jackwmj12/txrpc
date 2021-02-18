@@ -3,11 +3,10 @@ from twisted.internet import asyncioreactor
 loop = asyncio.get_event_loop()
 asyncioreactor.install(eventloop=loop)
 
-from utils import Log
+from utils import logger
 from rpc import RPCClient
 
-
-Log.init_()
+logger.init()
 
 client = RPCClient(
     name="client",

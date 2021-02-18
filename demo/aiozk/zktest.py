@@ -3,9 +3,8 @@ import os
 import aiozk
 import asyncio
 
-
 async def main():
-    zk = aiozk.ZKClient('{}:2181'.format(os.environ.get("TEST_ZK_HOST")))
+    zk = aiozk.ZKClient('{}:2181'.format(os.environ.get("HOST_OF_TEST")))
     await zk.start()
     await zk.ensure_path('/test')
     await zk.create('/test/to', 'hello world')

@@ -12,7 +12,7 @@ async def children_callback(c):
 
 async def main():
     ready = asyncio.Event()
-    zk = aiozk.ZKClient('{}:2181'.format(os.environ.get("TEST_ZK_HOST")))
+    zk = aiozk.ZKClient('{}:2181'.format(os.environ.get("HOST_OF_TEST")))
     await zk.start()
     await zk.ensure_path("test")
     watcher = zk.recipes.ChildrenWatcher()

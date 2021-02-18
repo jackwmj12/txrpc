@@ -24,7 +24,7 @@ Created on 2019-11-22
 from twisted.spread import pb
 from twisted.internet import reactor
 from distributed.reference import ProxyReference
-from utils import Log
+from utils import logger
 
 
 class RemoteObject(object):
@@ -80,7 +80,7 @@ class RemoteObject(object):
         '''
         远程调用
         '''
-        Log.debug("RPC : call <remote> method <{}>".format(commandId))
+        logger.debug("RPC : call <remote> method <{}>".format(commandId))
         deferedRemote = self._factory.getRootObject()
         return deferedRemote.addCallback(_callRemote,'callTarget',commandId,*args,**kw)
     

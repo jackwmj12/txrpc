@@ -23,7 +23,7 @@ Created on 2019-11-22
 
 import threading
 from twisted.internet import defer,threads
-from utils import Log
+from utils import logger
 
 
 class Service(object):
@@ -63,7 +63,7 @@ class Service(object):
                 exist_target = self._targets.get(key)
                 raise "target [%d] Already exists,\
                 Conflict between the %s and %s"%(key,exist_target.__name__,target.__name__)
-            Log.debug("当前服务器 Service:<{}> {} 注册成功".format(self._name,key))
+            logger.debug("当前服务器 Service:<{}> {} 注册成功".format(self._name, key))
             self._targets[key] = target
         finally:
             self._lock.release()
@@ -90,7 +90,7 @@ class Service(object):
         """Get a target from the service by name."""
         self._lock.acquire()
         try:
-            # Log.msg("共有服务target：{}".format(self._targets))
+            # logger.msg("共有服务target：{}".format(self._targets))
             target = self._targets.get(targetKey, None)
         finally:
             self._lock.release()
@@ -102,9 +102,9 @@ class Service(object):
         @param targetKey: target ID
         @param data: client data
         '''
-        # Log.debug("targetKey为：{}".format(targetKey))
-        # Log.debug("args为：{}".format(args))
-        # Log.debug("kwargs为：{}".format(kwargs))
+        # logger.debug("targetKey为：{}".format(targetKey))
+        # logger.debug("args为：{}".format(args))
+        # logger.debug("kwargs为：{}".format(kwargs))
         if self._runstyle == self.SINGLE_STYLE:
             result = self.callTargetSingle(targetKey,*args,**kwargs)
         else:
@@ -122,10 +122,10 @@ class Service(object):
         self._lock.acquire()
         try:
             if not target:
-                Log.err('the command '+str(targetKey)+' not Found on service in ' + self._name)
+                logger.err('the command ' + str(targetKey) + ' not Found on service in ' + self._name)
                 return None
             if targetKey not in self.unDisplay:
-                Log.debug("RPC : <remote> call method <%s> on service[single]"%target.__name__)
+                logger.debug("RPC : <remote> call method <%s> on service[single]" % target.__name__)
             defer_data = target(*args,**kw)
             if not defer_data:
                 return None
@@ -147,15 +147,14 @@ class Service(object):
         try:
             target = self.getTarget(targetKey)
             if not target:
-                Log.err('the command '+str(targetKey)+' not Found on service in ' + self._name)
+                logger.err('the command ' + str(targetKey) + ' not Found on service in ' + self._name)
                 return None
-            Log.debug("RPC : <remote> call method <%s> on service[parallel]"%target.__name__)
+            logger.debug("RPC : <remote> call method <%s> on service[parallel]" % target.__name__)
             d = threads.deferToThread(target,*args,**kw)
         finally:
             self._lock.release()
         return d
     
-
 class CommandService(Service):
     """A remoting service 
     According to Command ID search target
@@ -169,7 +168,7 @@ class CommandService(Service):
                 exist_target = self._targets.get(key)
                 raise "target [%d] Already exists,\
                 Conflict between the %s and %s"%(key,exist_target.__name__,target.__name__)
-            Log.debug("当前服务器 CommandService:<{}> {} 注册成功".format(self._name,key))
+            logger.debug("当前服务器 CommandService:<{}> {} 注册成功".format(self._name, key))
             self._targets[key] = target
         finally:
             self._lock.release()

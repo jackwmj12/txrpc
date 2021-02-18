@@ -1,5 +1,6 @@
 import asyncio
 from twisted.internet import asyncioreactor
+
 loop = asyncio.get_event_loop()
 asyncioreactor.install(eventloop=loop)
 
@@ -9,22 +10,21 @@ import aiozk
 from twisted.internet import reactor, defer
 
 from globalobject import GlobalObject
-from utils import Log, asDeferred
+from utils import asDeferred, logger
 import sys
-
 from rpc import RPCServer
 
-Log.init_()
+logger.init()
 
 zk = aiozk.ZKClient('{}:2181'.format(os.environ.get("TEST_ZK_HOST")))
 
 async def data_callback(d):
-    Log.debug(d)
+    logger.debug(d)
     # await asyncio.sleep(0.1)
     # try:
     #     await zk.delete('/greeting/to/words')
     # except Exception as e:
-    #     Log.err(e)
+    #     logger.err(e)
 
 @asDeferred
 async def create_zk_water():
@@ -44,27 +44,29 @@ def fun2_():
         ret = yield create_zk_water()
         defer.returnValue(ret)
     except Exception as e:
-        Log.err(e)
+        logger.err(e)
         defer.returnValue(None)
 
 def fun_():
     d = GlobalObject().root.callChildByName("client", "client_test")
-    d.addCallback(Log.debug)
-    d.addErrback(Log.err)
+    if not d:
+        return None
+    d.addCallback(logger.debug)
+    d.addErrback(logger.err)
     return d
 
 def doChildConnect(name,transport):
     '''
     :return
     '''
-    Log.debug("{} connected".format(name))
+    logger.debug("{} connected".format(name))
     reactor.callLater(1,fun_)
     
 def doChildLostConnect(childId):
     '''
     :return
     '''
-    Log.debug("{} lost connect".format(childId))
+    logger.debug("{} lost connect".format(childId))
 
 server = RPCServer("server",10000)
 server.setDoWhenChildConnect(doChildConnect)

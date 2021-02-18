@@ -21,12 +21,11 @@ Created on 2019-11-22
     root节点
 '''
 from typing import Dict, List, Union
-
-from twisted.python import log
 from zope.interface import Interface, implementer
 import numpy as np
 from distributed.child import Child
-from utils import Log
+from utils import logger
+
 
 class Children():
     def __init__(self, name):
@@ -49,7 +48,7 @@ class Children():
             self.hand.extend(hand)
             np.random.shuffle(self.hand)  # 洗牌
         else:
-            log.err("append failed , node %s is already exist"%child.getName())
+            logger.err("append failed , node %s is already exist" % child.getName())
     
     def remove(self,child : Child):
         '''
@@ -61,7 +60,7 @@ class Children():
             self.hand = [item for item in self.hand if item != child] #
             np.random.shuffle(self.hand)  # 洗牌
         else:
-            log.err("remove failed , node %s is not exist"%child.getName())
+            logger.err("remove failed , node %s is not exist" % child.getName())
     
     def shuffle(self):
         '''
@@ -78,10 +77,8 @@ class Children():
         if self.children and self.hand:
             if self.handCur >= len(self.hand) :
                 self.handCur = 0
-                
-            # Log.debug(self.hand)
-            # Log.debug(self.handCur)
-            Log.debug(self.hand[self.handCur])
+
+            logger.err(self.hand[self.handCur])
             
             child = self.hand[self.handCur]
             self.handCur += 1
@@ -168,14 +165,14 @@ class ChildrenManager(object):
         @param child: Child object
         '''
         name = child.getName()
-        # log.msg("node %s is connecting"%name)
+        # logger.msg("node %s is connecting"%name)
         children : Children= self._childrens.get(name)
         if children:
             children.append(child)
         else:
             self._childrens[name] = Children(name)
             self._childrens[name].append(child)
-        # log.msg("node %s is connected" % name)
+        # logger.msg("node %s is connected" % name)
         
     def handShuffle(self,name):
         '''
@@ -185,7 +182,7 @@ class ChildrenManager(object):
         if children:
             children.shuffle()
         else:
-            log.err("child nodes %s is not exist"%name)
+            logger.err("child nodes %s is not exist" % name)
         
     def dropChild(self,child):
         '''
@@ -196,7 +193,7 @@ class ChildrenManager(object):
         if children:
             children.remove(child)
         else:
-            log.err("nodes %s is not exist "%child.getName())
+            logger.err("nodes %s is not exist " % child.getName())
             
     def dropChildById(self,childId):
         '''
@@ -207,7 +204,7 @@ class ChildrenManager(object):
         if child:
             self.dropChild(child)
         else:
-            log.err("node[%s] is not exist"%childId)
+            logger.err("node[%s] is not exist" % childId)
             
     def callChildById(self,childId,*args,**kw):
         '''调用子节点的接口
@@ -215,7 +212,7 @@ class ChildrenManager(object):
         '''
         child = self.getChildById(childId=childId)
         if not child:
-            Log.err("child %s doesn't exists"%childId)
+            logger.err("child %s doesn't exists" % childId)
             return None
         return child.callbackChild(*args,**kw)
     
@@ -223,13 +220,13 @@ class ChildrenManager(object):
         '''调用子节点的接口
         @param name: str 子节点的名称
         '''
-        Log.debug("调用服务，请求：{} 服务".format(name))
-        Log.debug("参数为：{}".format(args))
+        logger.debug("调用服务，请求：{} 服务".format(name))
+        logger.debug("参数为：{}".format(args))
 
         child = self.getChildByName(name)
         
         if not child:
-            Log.err("child %s doesn't exists"%name)
+            logger.err("child %s doesn't exists" % name)
             return None
         return child.callbackChild(*args,**kw)
         

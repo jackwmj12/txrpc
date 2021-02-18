@@ -7,8 +7,7 @@ from twisted.internet.task import react
 import os
 from globalobject import remoteserviceHandle
 from globalobject import remoteserviceHandle
-from utils import Log, asDeferred
-
+from utils import logger, asDeferred
 
 @asDeferred
 async def zktest():
@@ -18,9 +17,9 @@ async def zktest():
     await zk.delete('/greeting/to/words')
     await zk.create('/greeting/to/words',"hello")
     data, stat = await zk.get('/greeting/to/words')
-    Log.debug(type(data))
-    Log.debug(type(stat))
-    Log.debug(data)
+    # logger.debug(type(data))
+    # logger.debug(type(stat))
+    logger.debug(data)
     # b'hello world' is printed
     # await zk.delete('/greeting/to/words')
     # await zk.close()
@@ -31,5 +30,5 @@ async def zktest():
 @defer.inlineCallbacks
 def client_test():
     ret = yield zktest()
-    Log.debug(ret)
+    logger.debug(ret)
     defer.returnValue(ret)

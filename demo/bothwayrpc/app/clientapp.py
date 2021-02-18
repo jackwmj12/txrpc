@@ -2,12 +2,12 @@ from twisted.internet import reactor
 
 from globalobject import remoteserviceHandle
 from rpc import RPCClient
-from utils import Log
+from utils import logger
 
 def fun():
     d = RPCClient.callRemote("server", "server_test")
-    d.addCallback(Log.debug)
-    d.addErrback(Log.err)
+    d.addCallback(logger.debug)
+    d.addErrback(logger.err)
     return d
 
 @remoteserviceHandle("server")

@@ -78,6 +78,6 @@ class Child(object):
         root节点调用子节点的接口
         return a Defered Object (recvdata)
         '''
-		# Log.debug("root 远程调用 child:{} ".format(self.getName()))
+		# logger.debug("root 远程调用 child:{} ".format(self.getName()))
 		recvdata = self._transport.callRemote('callChild', *args, **kw)
 		return recvdata

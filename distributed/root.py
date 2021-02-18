@@ -22,20 +22,19 @@ Created on 2019-11-22
 '''
 
 from twisted.internet.defer import Deferred
-from twisted.python import log
 from twisted.spread import pb
 from distributed.child import Child
 from distributed.manager import ChildrenManager
 
 from service.services import Service
-from utils import Log
+from utils import logger
 
 
 class BilateralBroker(pb.Broker):
     
     def connectionLost(self, reason):
         clientID = self.transport.sessionno
-        # Log.msg("node [%d] lose"%clientID)
+        # logger.msg("node [%d] lose"%clientID)
         self.factory.root.dropChildById(clientID)
         pb.Broker.connectionLost(self, reason)
 
@@ -65,19 +64,19 @@ class PBRoot(pb.Root):
         当node节点连接时的处理
         """
         try:
-            Log.debug("node [%s] connect" % name)
+            logger.debug("node [%s] connect" % name)
         except Exception as e:
-            Log.err(str(e))
+            logger.err(str(e))
             
     def doChildLostConnect(self,childId):
         """
         当node节点连接时的处理
         """
         try:
-            Log.debug("node [%s] lose" % childId)
+            logger.debug("node [%s] lose" % childId)
             # del GlobalObject().remote[childId]
         except Exception as e:
-            Log.err(str(e))
+            logger.err(str(e))
     
     def dropChild(self,*args,**kw):
         '''删除子节点记录'''
@@ -90,9 +89,9 @@ class PBRoot(pb.Root):
             return
         self.doChildLostConnect(child.getId())
         self.childsmanager.dropChildById(child.getId())
-        # Log.debug(self.childsmanager._children.get("client").children)
-        # Log.debug(self.childsmanager._children.get("client").hand)
-        # Log.debug(self.childsmanager._children.get("client").handCur)
+        # logger.debug(self.childsmanager._children.get("client").children)
+        # logger.debug(self.childsmanager._children.get("client").hand)
+        # logger.debug(self.childsmanager._children.get("client").handCur)
 
     def callChild(self,key,*args,**kw)->Deferred:
         '''调用子节点的接口
@@ -113,13 +112,13 @@ class PBRoot(pb.Root):
         设置代理通道
         @param addr: (hostname,port)hostname 根节点的主机名,根节点的端口
         '''
-        Log.debug('node [%s] takeProxy ready'%(name))
+        logger.debug('node [%s] takeProxy ready' % (name))
         child = Child(transport.broker.transport.sessionno,name)
         child.setWeight(weight)
         self.childsmanager.addChild(child)
-        # Log.debug(self.childsmanager._children.get("client").children)
-        # Log.debug(self.childsmanager._children.get("client").hand)
-        # Log.debug(self.childsmanager._children.get("client").handCur)
+        # logger.debug(self.childsmanager._children.get("client").children)
+        # logger.debug(self.childsmanager._children.get("client").hand)
+        # logger.debug(self.childsmanager._children.get("client").handCur)
         child.setTransport(transport)
         self.doChildConnect(name, transport)
 

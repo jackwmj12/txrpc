@@ -1,24 +1,26 @@
 from twisted.internet import reactor
 
 from globalobject import GlobalObject
-from utils import Log
+from utils import logger
 import sys
 
 from rpc import RPCServer
 
-Log.init_()
+logger.init()
 
 def fun():
     d = RPCServer.callRemote("client", "client_test")
-    d.addCallback(Log.debug)
-    d.addErrback(Log.err)
+    if not d:
+        return None
+    d.addCallback(logger.debug)
+    d.addErrback(logger.err)
     return d
 
 def doChildConnect(name,transport):
     '''
     :return
     '''
-    Log.debug("{} connected".format(name))
+    logger.debug("{} connected".format(name))
     
     for i in range(1000):
         reactor.callLater(i*2 + 1,fun)
@@ -28,7 +30,7 @@ def doChildLostConnect(childId):
     '''
     :return
     '''
-    Log.debug("{} lost connect".format(childId))
+    logger.debug("{} lost connect".format(childId))
 
 server = RPCServer("server",10000,service_path="demo.baserpc.app.serverapp")
 server.setDoWhenChildConnect(doChildConnect)

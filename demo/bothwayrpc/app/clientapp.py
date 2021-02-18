@@ -1,8 +1,8 @@
 from twisted.internet import reactor
 
-from globalobject import remoteserviceHandle
-from rpc import RPCClient
-from utils import logger
+from txrpc.globalobject import remoteserviceHandle
+from txrpc.rpc import RPCClient
+from txrpc.utils import logger
 
 def fun():
     d = RPCClient.callRemote("server", "server_test")

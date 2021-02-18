@@ -32,14 +32,14 @@ def register_rpc(app: FastAPI) -> None:
         
         from twisted.internet import asyncioreactor
         asyncioreactor.install(eventloop=loop)
-        from rpc import RPCClient
+        from txrpc.rpc import RPCClient
         
         global client
         
         client = RPCClient(name="client", target_name="server", host="127.0.0.1", port=10000,
                   service_path="demo.fastapi.client.app.clientapp", weight=10)
 
-        from utils import logger
+        from txrpc.utils import logger
         logger.init()
         
         # from twisted.internet import reactor

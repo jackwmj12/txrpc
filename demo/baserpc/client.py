@@ -1,6 +1,7 @@
-from globalobject import remoteserviceHandle, GlobalObject
-from utils import logger
-from rpc import RPCClient
+import os,sys
+from txrpc.globalobject import remoteserviceHandle, GlobalObject
+from txrpc.utils import logger
+from txrpc.rpc import RPCClient
 
 logger.init()
 

@@ -23,11 +23,11 @@ Created on 2019-11-22
 
 from twisted.internet.defer import Deferred
 from twisted.spread import pb
-from distributed.child import Child
-from distributed.manager import ChildrenManager
+from txrpc.distributed.child import Child
+from txrpc.distributed.manager import ChildrenManager
 
-from service.services import Service
-from utils import logger
+from txrpc.service.services import Service
+from txrpc.utils import logger
 
 
 class BilateralBroker(pb.Broker):

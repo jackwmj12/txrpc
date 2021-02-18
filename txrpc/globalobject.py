@@ -21,10 +21,10 @@ Created on 2019-11-22
 '''
 import os
 from typing import Dict, List, Any
-from distributed.node import RemoteObject
-from distributed.root import PBRoot
-from service.services import Service
-from utils.singleton import Singleton
+from txrpc.distributed.node import RemoteObject
+from txrpc.distributed.root import PBRoot
+from txrpc.service.services import Service
+from txrpc.utils.singleton import Singleton
 
 class RemoteUnFindedError(Exception):
     pass

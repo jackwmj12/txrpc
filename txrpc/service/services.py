@@ -26,7 +26,7 @@ import threading
 from twisted.internet import defer,threads
 from twisted.internet.defer import Deferred
 
-from utils import logger
+from txrpc.utils import logger
 
 
 class Service(object):

@@ -9,10 +9,10 @@ import os
 import aiozk
 from twisted.internet import reactor, defer
 
-from globalobject import GlobalObject
-from utils import asDeferred, logger
+from txrpc.globalobject import GlobalObject
+from txrpc.utils import asDeferred, logger
 import sys
-from rpc import RPCServer
+from txrpc.rpc import RPCServer
 
 logger.init()
 

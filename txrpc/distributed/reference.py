@@ -22,7 +22,7 @@ Created on 2019-11-22
 '''
 
 from twisted.spread import pb
-from service.services import Service
+from txrpc.service.services import Service
 
 class ProxyReference(pb.Referenceable):
     '''代理通道'''

@@ -23,8 +23,8 @@ Created on 2019-11-22
 
 from twisted.spread import pb
 from twisted.internet import reactor
-from distributed.reference import ProxyReference
-from utils import logger
+from txrpc.distributed.reference import ProxyReference
+from txrpc.utils import logger
 
 
 class RemoteObject(object):

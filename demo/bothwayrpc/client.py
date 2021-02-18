@@ -1,8 +1,10 @@
+import os,sys
+
 from twisted.internet import reactor
 
-from globalobject import remoteserviceHandle, GlobalObject
-from utils import logger
-from rpc import RPCClient, RPCServer
+from txrpc.globalobject import remoteserviceHandle, GlobalObject
+from txrpc.utils import logger
+from txrpc.rpc import RPCClient, RPCServer
 
 logger.init()
 

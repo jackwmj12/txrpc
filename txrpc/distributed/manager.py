@@ -23,8 +23,8 @@ Created on 2019-11-22
 from typing import Dict, List, Union
 from zope.interface import Interface, implementer
 import numpy as np
-from distributed.child import Child
-from utils import logger
+from txrpc.distributed.child import Child
+from txrpc.utils import logger
 
 
 class Children():

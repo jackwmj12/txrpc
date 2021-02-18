@@ -5,16 +5,16 @@ import sys
 
 from twisted.python.logfile import DailyLogFile
 
-from utils.logger import LevelFileLogObserver
+from txrpc.utils.logger import LevelFileLogObserver
 from typing import List, Dict, Any
 
 from twisted.internet import reactor
 
-from distributed.node import RemoteObject
-from distributed.root import BilateralFactory, PBRoot
-from globalobject import GlobalObject
-from service import services
-from utils import delay_import, logger
+from txrpc.distributed.node import RemoteObject
+from txrpc.distributed.root import BilateralFactory, PBRoot
+from txrpc.globalobject import GlobalObject
+from txrpc.service import services
+from txrpc.utils import delay_import, logger
 
 
 class RPC():

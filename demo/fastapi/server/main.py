@@ -1,10 +1,8 @@
 from fastapi import FastAPI
 
-
 server = None
 
 app = FastAPI()
-
 
 @app.get("/")
 def read_root():
@@ -40,9 +38,9 @@ def register_rpc(app: FastAPI) -> None:
 		
 		global server
 		
-		from utils import logger
+		from txrpc.utils import logger
 		
-		from rpc import RPCServer
+		from txrpc.rpc import RPCServer
 		
 		logger.init()
 		

@@ -6,9 +6,8 @@ from twisted.internet import defer
 import sys
 
 from twisted.internet.defer import Deferred
-from twisted.python import log
 
-from utils import logger
+from txrpc.utils import logger
 
 
 def delay_import(modules, delay=0.1):

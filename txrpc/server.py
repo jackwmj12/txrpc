@@ -37,24 +37,26 @@ class RPCServer(RPC):
 	:return
 	'''
 	
-	def __init__(self, name: str):
+	def __init__(self, name: str,service_path = None,port=None):
 		'''
 		:return
 		'''
 		# root对象监听制定端口
 		super().__init__()
 		
-		logger.debug(GlobalObject().config.get("DISTRIBUTED"))
+		self.name = name
 		
-		self.service_path = GlobalObject().config.get("DISTRIBUTED").get(name).get("APP")
+		if not service_path:
+			self.service_path = GlobalObject().config.get("DISTRIBUTED").get(name).get("APP")
+		
+		if not port:
+			port = int(GlobalObject().config.get("DISTRIBUTED").get(name).get("PORT"))
 		
 		GlobalObject().root = PBRoot()
 		
 		from twisted.internet import reactor
 		
-		reactor.listenTCP(int(GlobalObject().config.get("DISTRIBUTED").get(name).get("PORT")), BilateralFactory(GlobalObject().root))
-		
-		self.name = name
+		reactor.listenTCP(port, BilateralFactory(GlobalObject().root))
 		
 		service = Service(name=name)
 		

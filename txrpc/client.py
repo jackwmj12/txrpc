@@ -45,21 +45,30 @@ class RPCClient(RPC):
 		self.connectService = Service("connect_service")
 		self.name = name
 		
-	def clientConnect(self):
+	def clientConnect(self,name=None,host =None,port=None,weight=None,service_path=None):
 		'''
 		:param
 		'''
+		if not service_path:
+			self.service_path = GlobalObject().config.get("DISTRIBUTED").get(self.name).get("APP")
+		else:
+			self.service_path = service_path
 		
-		self.service_path = GlobalObject().config.get("DISTRIBUTED").get(self.name).get("APP")
+		if not name:
+			name = GlobalObject().config.get("DISTRIBUTED").get(self.name).get("REMOTE").get("NAME")
 		
-		target_name = GlobalObject().config.get("DISTRIBUTED").get(self.name).get("REMOTE").get("NAME")
-		host = GlobalObject().config.get("DISTRIBUTED").get(self.name).get("REMOTE").get("HOST")
-		port = int(GlobalObject().config.get("DISTRIBUTED").get(self.name).get("REMOTE").get("PORT"))
-		weight = int(GlobalObject().config.get("DISTRIBUTED").get(self.name).get("REMOTE").get("WEIGHT",10))
+		if not host:
+			host = GlobalObject().config.get("DISTRIBUTED").get(self.name).get("REMOTE").get("HOST")
+			
+		if not port:
+			port = int(GlobalObject().config.get("DISTRIBUTED").get(self.name).get("REMOTE").get("PORT"))
 		
-		logger.debug("local<{name}> -> remote:<{target_name}>".format(name=self.name, target_name=target_name))
+		if not weight:
+			weight = int(GlobalObject().config.get("DISTRIBUTED").get(self.name).get("REMOTE").get("WEIGHT",10))
 		
-		self._connectRemote(name=self.name, target_name=target_name, host=host, port=port, weight=weight)
+		logger.debug("local<{name}> -> remote:<{target_name}>".format(name=self.name, target_name=name))
+		
+		self._connectRemote(name=self.name, target_name=name, host=host, port=port, weight=weight)
 		
 		if self.service_path:
 			self.registerService(self.service_path)

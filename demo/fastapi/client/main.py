@@ -32,7 +32,7 @@ def register_rpc(app: FastAPI) -> None:
         
         from twisted.internet import asyncioreactor
         asyncioreactor.install(eventloop=loop)
-        from txrpc.rpc import RPCClient
+        from txrpc.client import RPCClient
         
         global client
         

@@ -1,7 +1,10 @@
 import logging
+import os
 import sys
 
 from twisted.python import log
+from twisted.python.logfile import DailyLogFile
+
 
 class LevelFileLogObserver(log.FileLogObserver):
 
@@ -20,17 +23,27 @@ class LevelFileLogObserver(log.FileLogObserver):
             eventDict["system"] = logging._levelToName[level]
             log.FileLogObserver.emit(self,eventDict)
 
-def init(debug=True):
+def init(debug=True,file_path = None,file_name = None):
+    
+    log.msg(f"初始化日志路径为：{file_path}")
 
+    if file_path and os.path.isdir(file_path) == False:  # 设置生产日志路径
+        os.mkdir(file_path)
+    
     log.FileLogObserver.timeFormat = '%Y-%m-%d %H:%M:%S'
-
-    if debug:
+ 
+    if file_name and not debug:
+        f = DailyLogFile(file_name + ".log", file_path)
+        log.msg("当前为常规模式，设置日志路径，且将日志运行于每日分割模式")
+        log_level = logging.INFO
+    else:
         f = sys.stdout
         log.msg("当前为DEBUG模式，设置日志为屏幕输出")
-        log_observer = LevelFileLogObserver(f, logging.DEBUG)
-        log.startLoggingWithObserver(log_observer.emit, setStdout=False)
-    else:
-        pass
+        log_level = logging.DEBUG
+
+    logger = LevelFileLogObserver(f, log_level)
+    
+    log.startLoggingWithObserver(logger.emit, setStdout=False)
 
 def debug(msg):
     log.msg(msg, level=logging.DEBUG)

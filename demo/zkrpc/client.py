@@ -4,7 +4,7 @@ loop = asyncio.get_event_loop()
 asyncioreactor.install(eventloop=loop)
 
 from txrpc.utils import logger
-from txrpc.rpc import RPCClient
+from txrpc.client import RPCClient
 
 logger.init()
 

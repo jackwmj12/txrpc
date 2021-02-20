@@ -23,7 +23,7 @@ import os
 from typing import Dict, List, Any
 from txrpc.distributed.node import RemoteObject
 from txrpc.distributed.root import PBRoot
-from txrpc.service.services import Service
+from txrpc.service.service import Service
 from txrpc.utils import logger
 from txrpc.utils.singleton import Singleton
 
@@ -38,9 +38,6 @@ class GlobalObject(metaclass=Singleton):
         self.remote : Dict[str:RemoteObject] = {}  # REMOTE remote节点
         self.remote_map : Dict[str:Dict[str,Any[str,int]]] = {}
         self.root : PBRoot = None
-        
-        self.stophandler = None #停止指令触发函数
-        self.reloadhandler = None #重载指令触发函数
         
         self.starthandler = None #开始指令触发函数
         

@@ -26,7 +26,7 @@ from twisted.spread import pb
 from txrpc.distributed.child import Child
 from txrpc.distributed.manager import ChildrenManager
 
-from txrpc.service.services import Service
+from txrpc.service.service import Service
 from txrpc.utils import logger
 
 
@@ -49,9 +49,11 @@ class PBRoot(pb.Root):
     def __init__(self,dnsmanager = ChildrenManager()):
         '''初始化根节点
         '''
-        # self._current_id = 0
         self.childsmanager : ChildrenManager = dnsmanager
         self.service: Service = None
+        
+        self.childConnectService = Service("cc_service")
+        self.childLostConnectService = Service("clc_service")
         
     def addServiceChannel(self,service : Service):
         '''添加服务通道
@@ -65,6 +67,8 @@ class PBRoot(pb.Root):
         """
         try:
             logger.debug("node [%s] connect" % name)
+            for service in self.childConnectService:
+                self.childConnectService.callTarget(service,name,transport)
         except Exception as e:
             logger.err(str(e))
             
@@ -75,6 +79,8 @@ class PBRoot(pb.Root):
         try:
             logger.debug("node [%s] lose" % childId)
             # del GlobalObject().remote[childId]
+            for service in self.childLostConnectService:
+                self.childLostConnectService.callTarget(service,childId)
         except Exception as e:
             logger.err(str(e))
     

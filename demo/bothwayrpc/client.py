@@ -1,10 +1,9 @@
-import os,sys
-
 from twisted.internet import reactor
 
-from txrpc.globalobject import remoteserviceHandle, GlobalObject
+import txrpc
 from txrpc.utils import logger
-from txrpc.rpc import RPCClient, RPCServer
+from txrpc.client import RPCClient
+from txrpc.server import RPCServer
 
 logger.init()
 
@@ -18,6 +17,9 @@ def fun():
     return d
 
 
+server = RPCServer("server",9000,service_path="demo.baserpc.app.serverapp")
+
+@server.childConnectHandle
 def doChildConnect(name, transport):
     '''
     :return
@@ -27,15 +29,19 @@ def doChildConnect(name, transport):
     for i in range(1000):
         reactor.callLater(i * 2 + 1, fun)
 
+@server.childLostConnectHandle
 def doChildLostConnect(childId):
     '''
     :return
     '''
     logger.debug("{} lost connect".format(childId))
 
-server = RPCServer("server",9000,service_path="demo.baserpc.app.serverapp")
-server.setDoWhenChildConnect(doChildConnect)
-server.setDoWhenChildLostConnect(doChildLostConnect)
+client = RPCClient().clientConnect(
+    name="client",
+    target_name="server",
+    host="127.0.0.1",
+    port=10000,
+    service_path="demo.baserpc.app.clientapp"
+    ,weight=10)
 
-client = RPCClient().clientConnect(name="client",target_name="server",host="127.0.0.1",port=10000,service_path="demo.baserpc.app.clientapp",weight=10)
-client.run()
+txrpc.run()

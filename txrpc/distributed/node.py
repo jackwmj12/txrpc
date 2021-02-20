@@ -24,6 +24,7 @@ Created on 2019-11-22
 from twisted.spread import pb
 from twisted.internet import reactor
 from txrpc.distributed.reference import ProxyReference
+from txrpc.service.service import Service
 from txrpc.utils import logger
 
 
@@ -40,6 +41,8 @@ class RemoteObject(object):
         self._factory = pb.PBClientFactory() # pb的客户端，客户端可以执行server端的remote方法
         self._reference = ProxyReference()  # 创建代理通道，该通道包含添加服务，代理发送数据功能
         self._addr = None
+        
+        self.connectedService = Service("connected_service")
     
     def setName(self,name):
         '''设置节点的名称'''
@@ -94,7 +97,9 @@ class RemoteObject(object):
         '''
         :param
         '''
-
+        for service in self.connectedService:
+            self.connectedService.callTarget(service)
+        
 def _callRemote(obj:RemoteObject,funcName:str,*args,**kw):
     '''远程调用
     @param funcName: str 远程方法

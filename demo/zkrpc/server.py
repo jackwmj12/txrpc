@@ -11,8 +11,7 @@ from twisted.internet import reactor, defer
 
 from txrpc.globalobject import GlobalObject
 from txrpc.utils import asDeferred, logger
-import sys
-from txrpc.rpc import RPCServer
+from txrpc.server import RPCServer
 
 logger.init()
 

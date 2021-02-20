@@ -40,7 +40,7 @@ def register_rpc(app: FastAPI) -> None:
 		
 		from txrpc.utils import logger
 		
-		from txrpc.rpc import RPCServer
+		from txrpc.server import RPCServer
 		
 		logger.init()
 		

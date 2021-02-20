@@ -48,7 +48,7 @@ class Service(object):
         self._targets = {} # Keeps track of targets internally
 
     def __iter__(self):
-        return self._targets.keys()
+        return iter(self._targets.keys())
 
     def setName(self,name):
         self._name = name

@@ -1,7 +1,7 @@
 from twisted.internet import reactor
 
 from txrpc.globalobject import remoteserviceHandle
-from txrpc.rpc import RPCClient
+from txrpc.client import RPCClient
 from txrpc.utils import logger
 
 def fun():

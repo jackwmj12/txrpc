@@ -31,6 +31,7 @@ def init(debug=True,file_path = None,file_name = None):
         os.mkdir(file_path)
     
     log.FileLogObserver.timeFormat = '%Y-%m-%d %H:%M:%S'
+    # log.FileLogObserver.
  
     if file_name and not debug:
         f = DailyLogFile(file_name + ".log", file_path)

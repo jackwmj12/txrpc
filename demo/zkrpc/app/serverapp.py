@@ -1,6 +1,6 @@
 from twisted.internet import reactor
 
-from globalobject import remoteserviceHandle, rootserviceHandle
+from txrpc.globalobject import remoteserviceHandle, rootserviceHandle
 
 @rootserviceHandle
 def server_test():

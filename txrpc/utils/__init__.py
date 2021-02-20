@@ -1,9 +1,5 @@
 import asyncio
 from imp import reload
-
-from typing import Any
-
-from twisted.internet import defer
 import sys
 
 from twisted.internet.defer import Deferred

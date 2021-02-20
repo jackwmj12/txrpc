@@ -29,34 +29,40 @@ from txrpc.core import RPC
 from txrpc.service.service import Service
 from txrpc.distributed.root import BilateralFactory, PBRoot
 from txrpc.globalobject import GlobalObject
+from txrpc.utils import logger
+
 
 class RPCServer(RPC):
 	'''
 	:return
 	'''
 	
-	def __init__(self, name: str, port: int, service_path: str = None):
+	def __init__(self, name: str):
 		'''
 		:return
 		'''
 		# root对象监听制定端口
 		super().__init__()
 		
-		self.service_path = service_path
+		logger.debug(GlobalObject().config.get("DISTRIBUTED"))
+		
+		self.service_path = GlobalObject().config.get("DISTRIBUTED").get(name).get("APP")
 		
 		GlobalObject().root = PBRoot()
 		
 		from twisted.internet import reactor
 		
-		reactor.listenTCP(port, BilateralFactory(GlobalObject().root))
+		reactor.listenTCP(int(GlobalObject().config.get("DISTRIBUTED").get(name).get("PORT")), BilateralFactory(GlobalObject().root))
+		
+		self.name = name
 		
 		service = Service(name=name)
 		
 		# 将服务添加到root
 		GlobalObject().root.addServiceChannel(service)
 		
-		if service_path:
-			self.registerService(service_path)
+		if self.service_path:
+			self.registerService(self.service_path)
 	
 	def childConnectHandle(self, target):
 		"""

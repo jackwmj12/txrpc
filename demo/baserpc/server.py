@@ -1,20 +1,26 @@
+import json
+import os
 from twisted.internet import reactor
-
+from txrpc.globalobject import GlobalObject
 from txrpc.utils import logger
-
 from txrpc.server import RPCServer
+
+NODE_NAME = "SERVER"
+
+with open(os.sep.join([os.path.dirname(os.path.abspath(__file__)),"config.json"])) as f:
+    GlobalObject().config = json.load(f)
 
 logger.init()
 
 def fun():
-    d = RPCServer.callRemote("client", "client_test")
+    d = RPCServer.callRemote("CLIENT", "client_test")
     if not d:
         return None
     d.addCallback(logger.debug)
     d.addErrback(logger.err)
     return d
 
-app = RPCServer("server",10000,service_path="demo.baserpc.app.serverapp")
+app = RPCServer(NODE_NAME)
 
 @app.startServiceHandle
 def doWhenStart():
@@ -37,6 +43,4 @@ def doChildLostConnect(childId):
     '''
     logger.debug("{} lost connect".format(childId))
 
-# app.setDoWhenChildConnect(doChildConnect)
-# app.setDoWhenChildLostConnect(doChildLostConnect)
 app.run()

@@ -56,7 +56,7 @@ class RPC():
 		'''
 		:return
 		'''
-		delay_import(service_path.split(","))
+		delay_import(service_path)
 	
 	def twisted_init(self):
 		'''

@@ -1,0 +1,18 @@
+{
+  "DISTRIBUTED": {
+    "SERVER": {
+      "PORT" : 10000,
+      "APP" : "demo.baserpc.app.serverapp"
+    },
+    "CLIENT": {
+      "NAME" : "CLIENT",
+      "REMOTE" : {
+        "NAME" :  "SERVER",
+        "HOST" : "127.0.0.1",
+        "PORT" : 10000
+      },
+      "APP" : "demo.baserpc.app.clientapp",
+      "WEIGHT" : 10
+    }
+  }
+}

@@ -52,8 +52,8 @@ class PBRoot(pb.Root):
         self.childsmanager : ChildrenManager = dnsmanager
         self.service: Service = None
         
-        self.childConnectService = Service("cc_service")
-        self.childLostConnectService = Service("clc_service")
+        self.childConnectService = Service("child_connect_service")
+        self.childLostConnectService = Service("child_lost_connect_service")
         
     def addServiceChannel(self,service : Service):
         '''添加服务通道

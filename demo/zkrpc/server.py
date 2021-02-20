@@ -1,4 +1,6 @@
 import asyncio
+import json
+
 from twisted.internet import asyncioreactor
 
 loop = asyncio.get_event_loop()
@@ -12,6 +14,11 @@ from twisted.internet import reactor, defer
 from txrpc.globalobject import GlobalObject
 from txrpc.utils import asDeferred, logger
 from txrpc.server import RPCServer
+
+NODE_NAME = "SERVER"
+
+with open(os.sep.join([os.path.dirname(os.path.abspath(__file__)),"config.json"])) as f:
+    GlobalObject().config = json.load(f)
 
 logger.init()
 
@@ -47,28 +54,29 @@ def fun2_():
         defer.returnValue(None)
 
 def fun_():
-    d = GlobalObject().root.callChildByName("client", "client_test")
+    d = GlobalObject().root.callChildByName("CLIENT", "client_test")
     if not d:
         return None
     d.addCallback(logger.debug)
     d.addErrback(logger.err)
     return d
 
-def doChildConnect(name,transport):
+server = RPCServer("SERVER")
+
+@server.childConnectHandle
+def doChildConnect(name, transport):
     '''
     :return
     '''
     logger.debug("{} connected".format(name))
-    reactor.callLater(1,fun_)
-    
+    reactor.callLater(1, fun_)
+
+@server.childLostConnectHandle
 def doChildLostConnect(childId):
     '''
     :return
     '''
     logger.debug("{} lost connect".format(childId))
 
-server = RPCServer("server",10000)
-server.setDoWhenChildConnect(doChildConnect)
-server.setDoWhenChildLostConnect(doChildLostConnect)
 reactor.callLater(0.1,fun2_)
 server.run()

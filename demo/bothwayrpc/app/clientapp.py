@@ -5,12 +5,12 @@ from txrpc.client import RPCClient
 from txrpc.utils import logger
 
 def fun():
-    d = RPCClient.callRemote("server", "server_test")
+    d = RPCClient.callRemote("SERVER", "server_test")
     d.addCallback(logger.debug)
     d.addErrback(logger.err)
     return d
 
-@remoteserviceHandle("server")
+@remoteserviceHandle("SERVER")
 def client_test():
     reactor.callLater(1, fun)
     return "this is a response from client"

@@ -1,13 +1,21 @@
+import json
+import os
+
+from txrpc.globalobject import GlobalObject
 from txrpc.utils import logger
 from txrpc.client import RPCClient
 
+NODE_NAME = "CLIENT"
+
+with open(os.sep.join([os.path.dirname(os.path.abspath(__file__)),"config.json"])) as f:
+    GlobalObject().config = json.load(f)
+
 logger.init()
 
-app = RPCClient()\
-	.clientConnect(name="client",target_name="server",host="127.0.0.1",port=10000,service_path="demo.baserpc.app.clientapp",weight=10)
+app = RPCClient(name=NODE_NAME).clientConnect()
 
 @app.startServiceHandle
 def doWhenStart():
-	logger.debug("i am starting")
+    logger.debug("i am starting")
 
 app.run()

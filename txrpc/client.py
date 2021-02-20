@@ -37,30 +37,32 @@ class RPCClient(RPC):
 	:return
 	'''
 	
-	def __init__(self):
+	def __init__(self,name = None):
 		'''
 		:return
 		'''
 		super().__init__()
 		self.connectService = Service("connect_service")
-	
-	def doConnect(self,target):
-		'''
+		self.name = name
 		
-		:param
-		'''
-		self.connectService.mapTarget(target)
-		
-	def clientConnect(self, name: str, target_name: str, host: str, port: int, service_path: str = None, weight=10):
+	def clientConnect(self):
 		'''
 		:param
 		'''
-		logger.debug("local<{name}> -> remote:<{target_name}>".format(name=name, target_name=target_name))
 		
-		self._connectRemote(name=name, target_name=target_name, host=host, port=port, weight=weight)
+		self.service_path = GlobalObject().config.get("DISTRIBUTED").get(self.name).get("APP")
 		
-		if service_path:
-			self.registerService(service_path)
+		target_name = GlobalObject().config.get("DISTRIBUTED").get(self.name).get("REMOTE").get("NAME")
+		host = GlobalObject().config.get("DISTRIBUTED").get(self.name).get("REMOTE").get("HOST")
+		port = int(GlobalObject().config.get("DISTRIBUTED").get(self.name).get("REMOTE").get("PORT"))
+		weight = int(GlobalObject().config.get("DISTRIBUTED").get(self.name).get("REMOTE").get("WEIGHT",10))
+		
+		logger.debug("local<{name}> -> remote:<{target_name}>".format(name=self.name, target_name=target_name))
+		
+		self._connectRemote(name=self.name, target_name=target_name, host=host, port=port, weight=weight)
+		
+		if self.service_path:
+			self.registerService(self.service_path)
 		
 		return self
 	
@@ -90,3 +92,10 @@ class RPCClient(RPC):
 		
 		for service in self.connectService:
 			self.connectService.callTarget(service)
+	
+	def doConnect(self, target):
+		'''
+
+		:param
+		'''
+		self.connectService.mapTarget(target)

@@ -27,6 +27,13 @@ from txrpc.distributed.reference import ProxyReference
 from txrpc.service.service import Service
 from txrpc.utils import logger
 
+class RpcClientFactory(pb.PBClientFactory):
+    
+    def clientConnectionLost(self, connector, reason, reconnecting=0):
+        super().clientConnectionLost(connector, reason, reconnecting)
+    
+    def clientConnectionMade(self, broker):
+        super().clientConnectionMade(broker)
 
 class RemoteObject(object):
     '''远程调用对象'''

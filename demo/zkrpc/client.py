@@ -1,19 +1,27 @@
 import asyncio
+import json
+import os
+
 from twisted.internet import asyncioreactor
+
 loop = asyncio.get_event_loop()
 asyncioreactor.install(eventloop=loop)
 
-from txrpc.utils import logger
 from txrpc.client import RPCClient
+
+from txrpc.utils import logger
+
+from txrpc.globalobject import GlobalObject
+
+with open(os.sep.join([os.path.dirname(os.path.abspath(__file__)),"config.json"])) as f:
+    GlobalObject().config = json.load(f)
 
 logger.init()
 
-client = RPCClient().clientConnect(
-    name="client",
-    target_name="server",
-    host="127.0.0.1",
-    port=10000,
-    service_path="demo.zkrpc.app.clientapp"
-)
+NODE_NAME = "CLIENT"
+
+
+
+client = RPCClient(name=NODE_NAME).clientConnect()
 
 client.run()

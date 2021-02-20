@@ -64,9 +64,8 @@ class Service(object):
             key = target.__name__
             if key in self._targets.keys():
                 exist_target = self._targets.get(key)
-                raise "target [%d] Already exists,\
-                Conflict between the %s and %s"%(key,exist_target.__name__,target.__name__)
-            logger.debug("当前服务器 Service:<{}> {} 注册成功".format(self._name, key))
+                raise Exception(f"target {key} Already exists,Conflict between the {exist_target.__name__} and {target.__name__}")
+            logger.debug(f"Service:<{self._name}> {key} 注册成功")
             self._targets[key] = target
         finally:
             self._lock.release()

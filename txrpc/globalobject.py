@@ -78,10 +78,11 @@ class remoteserviceHandle:
     def __call__(self,target):
         """
         """
-        logger.debug(f"remoteserviceHandle {self.remotename}")
+        logger.debug(f"remoteserviceHandle <{self.remotename}>")
         GlobalObject().getRemote(self.remotename)._reference._service.mapTarget(target)
 
 localservice = Service('localservice')
+
 def localserviceHandle(target):
     '''
     创建本地服务装饰器

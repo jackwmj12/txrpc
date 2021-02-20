@@ -1,3 +1,5 @@
+import json
+import os
 
 from fastapi import FastAPI
 
@@ -32,15 +34,21 @@ def register_rpc(app: FastAPI) -> None:
         
         from twisted.internet import asyncioreactor
         asyncioreactor.install(eventloop=loop)
+
+        from txrpc.globalobject import GlobalObject
+        from txrpc.utils import logger
+
+        with open(os.sep.join([os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config.json"])) as f:
+            GlobalObject().config = json.load(f)
+
+        logger.init()
+        
         from txrpc.client import RPCClient
         
         global client
         
-        client = RPCClient().clientConnect(name="client", target_name="server", host="127.0.0.1", port=10000,
-                  service_path="demo.fastapi.client.app.clientapp", weight=10)
+        client = RPCClient("CLIENT").clientConnect()
         
-        from txrpc.utils import logger
-        logger.init()
         
         # from twisted.internet import reactor
         

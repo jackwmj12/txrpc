@@ -49,6 +49,8 @@ class RPCClient(RPC):
 		'''
 		:param
 		'''
+		# logger.debug(GlobalObject().config.get("DISTRIBUTED").get(self.name))
+		
 		if not service_path:
 			self.service_path = GlobalObject().config.get("DISTRIBUTED").get(self.name).get("APP")
 		else:

@@ -26,6 +26,9 @@
 #
 #
 import socket
+
+from twisted.internet import defer
+
 from txrpc.service.service import Service
 from txrpc.globalobject import GlobalObject
 from txrpc.utils import delay_import, logger
@@ -91,7 +94,7 @@ class RPC():
 		程序重载时,将会运行该服务
 		"""
 		self.reloadService.mapTarget(target)
-	
+		
 	def _doWhenStart(self):
 		for service in self.startService:
 			self.startService.callTarget(service)

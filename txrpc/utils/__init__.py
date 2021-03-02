@@ -1,4 +1,5 @@
 import asyncio
+from functools import wraps
 from imp import reload
 import sys
 
@@ -36,9 +37,20 @@ def delay_import(modules, delay=0.1):
     else:
         __import(modules)
 
-class asDeferred(object):
-    def __init__(self, func):
-        self.func = func
+# class asDeferred(object):
+#     def __init__(self, func):
+#         self.func = func
+#
+#     def __call__(self, *args, **kwargs) -> Deferred:
+#         return Deferred.fromFuture(asyncio.ensure_future(self.func(*args,**kwargs)))
 
-    def __call__(self, *args, **kwargs) -> Deferred:
-        return Deferred.fromFuture(asyncio.ensure_future(self.func(*args,**kwargs)))
+def as_deferred(f):
+    return Deferred.fromFuture(asyncio.ensure_future(f))
+
+def asDeferred(f):
+    
+    @wraps(f)
+    def as_deferred(*args, **kwargs):
+        return Deferred.fromFuture(asyncio.ensure_future(f(*args,**kwargs)))
+    
+    return as_deferred

@@ -126,7 +126,7 @@ class ServiceBase(object):
                 logger.err('the command ' + str(targetKey) + ' not Found on service in ' + self._name)
                 return None
             if targetKey not in self.unDisplay:
-                logger.debug("RPC : <remote> call method <%s> on service[single]" % target.__name__)
+                logger.debug(f"RPC : <remote> call method <{targetKey}> : <{target.__name__}> on service[single]")
 
             defer_data = target(*args,**kw)
             if not defer_data:
@@ -134,8 +134,10 @@ class ServiceBase(object):
 
             if isinstance(defer_data, defer.Deferred):
                 return defer_data
+            
             elif inspect.isawaitable(defer_data):
                 return Deferred.fromFuture(asyncio.ensure_future(defer_data))
+            
             elif asyncio.coroutines.iscoroutine(defer_data):
                 return Deferred.fromCoroutine(defer_data)
 
@@ -174,8 +176,9 @@ class Service(ServiceBase):
             key = (target.__name__).split('__')[-1]
             if key in self._targets.keys():
                 exist_target = self._targets.get(key)
-                raise "target [%d] Already exists,\
-                Conflict between the %s and %s"%(key,exist_target.__name__,target.__name__)
+                logger.error("target [%s] Already exists,\
+                 Conflict between the %s and %s"%(key,exist_target.__name__,target.__name__))
+                raise "target [%s] Already exists,Conflict between the %s and %s"%(key,exist_target.__name__,target.__name__)
             logger.debug("当前服务器 CommandService:<{}> {} 注册成功".format(self._name, key))
             self._targets[key] = target
         finally:

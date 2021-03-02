@@ -90,28 +90,30 @@ class PBRoot(pb.Root):
         
     def dropChildById(self,childId):
         '''删除子节点记录'''
-        child = self.childsmanager.getChildById(childId)
-        if not child:
-            return
-        self.doChildLostConnect(child.getId())
-        self.childsmanager.dropChildById(child.getId())
-        # logger.debug(self.childsmanager._children.get("client").children)
-        # logger.debug(self.childsmanager._children.get("client").hand)
-        # logger.debug(self.childsmanager._children.get("client").handCur)
-
-    def callChild(self,key,*args,**kw)->Deferred:
-        '''调用子节点的接口
-        @param childId: int 子节点的id
-        return Defered Object
-        '''
-        return self.childsmanager.callChild(key,*args,**kw)
+        # child = self.childsmanager.getChildById(childId)
+        # if not child:
+        #     return
+        # self.doChildLostConnect(child.getId())
+        # self.childsmanager.dropChildById(child.getId())
+        
+        if self.childsmanager.dropChildById(childId):
+            self.doChildLostConnect(childId)
+        else:
+            self.doChildLostConnect(None)
     
     def callChildByName(self,childname,*args,**kw)->Deferred:
         '''调用子节点的接口
-        @param childId: int 子节点的id
+        @param childId: int 子节点的[id,str]
         return Defered Object
         '''
         return self.childsmanager.callChildByName(childname,*args,**kw)
+    
+    def callChildById(self,childId,*args,**kw)->Deferred:
+        '''调用子节点的接口
+        @param childId: int 子节点的id
+        return Defered Object
+        '''
+        return self.childsmanager.callChildById(childId,*args,**kw)
     
     def remote_takeProxy(self,name,weight,transport):
         '''

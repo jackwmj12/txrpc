@@ -37,6 +37,9 @@ class Children():
         self.children : List[Child] = []
         self.handCur : int = 0
     
+    def __str__(self):
+        return f"Children : {self.name} : {self.children}"
+    
     def append(self,child : Child):
         '''
         :param
@@ -77,9 +80,7 @@ class Children():
         if self.children and self.hand:
             if self.handCur >= len(self.hand) :
                 self.handCur = 0
-
-            logger.err(self.hand[self.handCur])
-            
+            # logger.debug(self.hand[self.handCur])
             child = self.hand[self.handCur]
             self.handCur += 1
             return child
@@ -105,7 +106,7 @@ class _ChildrenManager(Interface):
     def dropChild(self,*arg,**kw):
         '''删除一个节点'''
         
-    def callChild(self,*args,**kw):
+    def callChildById(self,*args,**kw):
         '''调用子节点的接口'''
         
     def callChildByName(self,*args,**kw):
@@ -155,6 +156,7 @@ class ChildrenManager(object):
         '''
         if name:
             children : Children = self._childrens.get(name)
+            logger.debug(f"children 获取成功 {children}")
             if children:
                 return children.getChild()
         return None
@@ -195,7 +197,7 @@ class ChildrenManager(object):
         else:
             logger.err("nodes %s is not exist " % child.getName())
             
-    def dropChildById(self,childId):
+    def dropChildById(self,childId : int) -> bool:
         '''
         删除一个child 节点
         @param childId: Child ID 
@@ -203,8 +205,10 @@ class ChildrenManager(object):
         child :Child = self.getChildById(childId)
         if child:
             self.dropChild(child)
+            return True
         else:
             logger.err("node[%s] is not exist" % childId)
+        return False
             
     def callChildById(self,childId,*args,**kw):
         '''调用子节点的接口

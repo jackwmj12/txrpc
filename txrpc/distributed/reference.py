@@ -23,6 +23,8 @@ Created on 2019-11-22
 
 from twisted.spread import pb
 from txrpc.service.service import Service
+from txrpc.utils import logger
+
 
 class ProxyReference(pb.Referenceable):
     '''代理通道'''
@@ -39,6 +41,8 @@ class ProxyReference(pb.Referenceable):
         '''
         代理发送数据
         '''
+        # logger.debug(command)
+        # logger.debug(arg)
         return self._service.callTarget(command,*arg,**kw)
     
     

@@ -20,8 +20,6 @@ logger.init()
 
 NODE_NAME = "CLIENT"
 
-
-
 client = RPCClient(name=NODE_NAME).clientConnect()
 
 client.run()

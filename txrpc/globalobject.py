@@ -34,7 +34,6 @@ class GlobalObject(metaclass=Singleton):
 
     def __init__(self):
         self.config = {}  # 配置信息
-        # self.remote :Dict[str:List[RemoteObject]]= {}  # REMOTE remote节点
         self.remote : Dict[str:RemoteObject] = {}  # REMOTE remote节点
         self.remote_map : Dict[str:Dict[str,Any[str,int]]] = {}
         self.root : PBRoot = None
@@ -79,6 +78,7 @@ class remoteserviceHandle:
         """
         """
         logger.debug(f"remoteserviceHandle <{self.remotename}>")
+        
         GlobalObject().getRemote(self.remotename)._reference._service.mapTarget(target)
 
 localservice = Service('localservice')

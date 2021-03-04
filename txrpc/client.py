@@ -41,7 +41,7 @@ class RPCClient(RPC):
 		'''
 		:return
 		'''
-		super().__init__()
+		super(RPCClient, self).__init__()
 		self.connectService = Service("connect_service")
 		self.name = name
 		

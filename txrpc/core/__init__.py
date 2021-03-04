@@ -59,6 +59,7 @@ class RPC():
 		'''
 		:return
 		'''
+		logger.debug(f"即将导入模块:{service_path}")
 		delay_import(service_path)
 	
 	def twisted_init(self):

@@ -63,4 +63,3 @@ def error(msg):
 
 def err(msg):
     log.msg(msg, level=logging.ERROR)
-    

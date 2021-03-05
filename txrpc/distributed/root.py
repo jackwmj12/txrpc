@@ -24,7 +24,7 @@ Created on 2019-11-22
 from twisted.internet.defer import Deferred
 from twisted.spread import pb
 from txrpc.distributed.child import Child
-from txrpc.distributed.manager import ChildrenManager
+from txrpc.distributed.manager import NodeManager
 
 from txrpc.service.service import Service
 from txrpc.utils import logger
@@ -46,10 +46,10 @@ class BilateralFactory(pb.PBServerFactory):
 class PBRoot(pb.Root):
     '''PB 代理服务器'''
     
-    def __init__(self,dnsmanager = ChildrenManager()):
+    def __init__(self,dnsmanager = NodeManager()):
         '''初始化根节点
         '''
-        self.childsmanager : ChildrenManager = dnsmanager
+        self.dnsmanager : NodeManager = dnsmanager
         self.service: Service = None
         
         self.childConnectService = Service("child_connect_service")
@@ -86,17 +86,11 @@ class PBRoot(pb.Root):
     
     def dropChild(self,*args,**kw):
         '''删除子节点记录'''
-        self.childsmanager.dropChild(*args,**kw)
+        self.dnsmanager.dropChild(*args,**kw)
         
     def dropChildById(self,childId):
         '''删除子节点记录'''
-        # child = self.childsmanager.getChildById(childId)
-        # if not child:
-        #     return
-        # self.doChildLostConnect(child.getId())
-        # self.childsmanager.dropChildById(child.getId())
-        
-        if self.childsmanager.dropChildById(childId):
+        if self.dnsmanager.dropChildById(childId):
             self.doChildLostConnect(childId)
         else:
             self.doChildLostConnect(None)
@@ -106,14 +100,14 @@ class PBRoot(pb.Root):
         @param childId: int 子节点的[id,str]
         return Defered Object
         '''
-        return self.childsmanager.callChildByName(childname,*args,**kw)
+        return self.dnsmanager.callChildByName(childname,*args,**kw)
     
     def callChildById(self,childId,*args,**kw)->Deferred:
         '''调用子节点的接口
         @param childId: int 子节点的id
         return Defered Object
         '''
-        return self.childsmanager.callChildById(childId,*args,**kw)
+        return self.dnsmanager.callChildById(childId,*args,**kw)
     
     def remote_takeProxy(self,name,weight,transport):
         '''
@@ -123,10 +117,10 @@ class PBRoot(pb.Root):
         logger.debug('node [%s] takeProxy ready' % (name))
         child = Child(transport.broker.transport.sessionno,name)
         child.setWeight(weight)
-        self.childsmanager.addChild(child)
-        # logger.debug(self.childsmanager._children.get("client").children)
-        # logger.debug(self.childsmanager._children.get("client").hand)
-        # logger.debug(self.childsmanager._children.get("client").handCur)
+        self.dnsmanager.addChild(child)
+        # logger.debug(self.dnsmanager._children.get("client").children)
+        # logger.debug(self.dnsmanager._children.get("client").hand)
+        # logger.debug(self.dnsmanager._children.get("client").handCur)
         child.setTransport(transport)
         self.doChildConnect(name, transport)
 

@@ -27,7 +27,7 @@ from txrpc.distributed.child import Child
 from txrpc.utils import logger
 
 
-class Children():
+class Node():
     def __init__(self, name):
         '''
         初始化子节点对象
@@ -50,6 +50,7 @@ class Children():
             hand = [child for _ in range(child.getWeight())]
             self.hand.extend(hand)
             np.random.shuffle(self.hand)  # 洗牌
+            logger.debug(f"append success , \nnodes {self.children}\nhand : {self.hand}")
         else:
             logger.err("append failed , node %s is already exist" % child.getName())
     
@@ -62,6 +63,7 @@ class Children():
             self.handCur = 0
             self.hand = [item for item in self.hand if item != child] #
             np.random.shuffle(self.hand)  # 洗牌
+            logger.debug(f"remove success , \nnodes {self.children}\nhand : {self.hand}")
         else:
             logger.err("remove failed , node %s is not exist" % child.getName())
     
@@ -86,7 +88,7 @@ class Children():
             return child
         return None
         
-class _ChildrenManager(Interface):
+class _NodeManager(Interface):
     '''节点管理器接口'''
     
     def __init__(self):
@@ -116,36 +118,32 @@ class _ChildrenManager(Interface):
     
     def dropChildByID(self,childId):
         '''删除一个child 节点
-        @param childId: Child ID 
+        @param childId: Child ID
         '''
-        
-    def dropChildSessionId(self, session_id):
-        """根据session_id删除child节点
-        """
-
-@implementer(_ChildrenManager)
-class ChildrenManager(object):
+       
+@implementer(_NodeManager)
+class NodeManager(object):
     '''子节点管理器'''
     
     def __init__(self):
         '''初始化子节点管理器'''
-        self._childrens : Dict[str:Children] = {}
+        self._nodes : Dict[str:Node] = {}
         
-    def getChildren(self,name) -> Union[Children,None]:
+    def getNode(self,name) -> Union[Node,None]:
         '''
         :param
         '''
-        children : Children = self._childrens.get(name)
-        if children :
-            return children
+        node : Node = self._nodes.get(name)
+        if node :
+            return node
         return None
     
     def getChildById(self,childId) -> Union[None,Child]:
         '''
         根据节点的ID获取节点实例
         '''
-        for children in self._childrens.values():
-            for child in children.children:
+        for node in self._nodes.values():
+            for child in node.children:
                 if child.getId() == childId:
                     return child
         return None
@@ -155,10 +153,10 @@ class ChildrenManager(object):
         根据节点的名称获取节点实例
         '''
         if name:
-            children : Children = self._childrens.get(name)
-            logger.debug(f"children 获取成功 {children}")
-            if children:
-                return children.getChild()
+            node : Node = self._nodes.get(name)
+            logger.debug(f"node 获取成功 {node}")
+            if node:
+                return node.getChild()
         return None
         
     def addChild(self,child :Child):
@@ -168,21 +166,21 @@ class ChildrenManager(object):
         '''
         name = child.getName()
         # logger.msg("node %s is connecting"%name)
-        children : Children= self._childrens.get(name)
-        if children:
-            children.append(child)
+        node : Node = self._nodes.get(name)
+        if node:
+            node.append(child)
         else:
-            self._childrens[name] = Children(name)
-            self._childrens[name].append(child)
+            self._nodes[name] = Node(name)
+            self._nodes[name].append(child)
         # logger.msg("node %s is connected" % name)
         
     def handShuffle(self,name):
         '''
         :param
         '''
-        children : Children= self.childrens.get(name)
-        if children:
-            children.shuffle()
+        node : Node = self._nodes.get(name)
+        if node:
+            node.shuffle()
         else:
             logger.err("child nodes %s is not exist" % name)
         
@@ -191,9 +189,9 @@ class ChildrenManager(object):
         删除一个child 节点
         @param child: Child Object 
         '''
-        children : Children = self._childrens.get(child.getName())
-        if children:
-            children.remove(child)
+        node : Node = self._nodes.get(child.getName())
+        if node:
+            node.remove(child)
         else:
             logger.err("nodes %s is not exist " % child.getName())
             
@@ -202,7 +200,7 @@ class ChildrenManager(object):
         删除一个child 节点
         @param childId: Child ID 
         '''
-        child :Child = self.getChildById(childId)
+        child : Child = self.getChildById(childId)
         if child:
             self.dropChild(child)
             return True

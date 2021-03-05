@@ -26,6 +26,8 @@ import numpy as np
 from txrpc.distributed.child import Child
 from txrpc.utils import logger
 
+class RemoteUnFindedError(Exception):
+    pass
 
 class Node():
     def __init__(self, name):
@@ -38,7 +40,10 @@ class Node():
         self.handCur : int = 0
     
     def __str__(self):
-        return f"Children : {self.name} : {self.children}"
+        return f" Children : {self.name} : {self.children} "
+    
+    def __repr__(self):
+        return f" Children : {self.name}"
     
     def append(self,child : Child):
         '''
@@ -215,7 +220,8 @@ class NodeManager(object):
         child = self.getChildById(childId=childId)
         if not child:
             logger.err("child %s doesn't exists" % childId)
-            return None
+            # raise RemoteUnFindedError()
+            return
         return child.callbackChild(*args,**kw)
     
     def callChildByName(self,name,*args,**kw):
@@ -229,6 +235,7 @@ class NodeManager(object):
         
         if not child:
             logger.err("child %s doesn't exists" % name)
-            return None
+            # raise RemoteUnFindedError()
+            return
         return child.callbackChild(*args,**kw)
         

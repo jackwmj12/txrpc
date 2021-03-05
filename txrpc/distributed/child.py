@@ -34,6 +34,12 @@ class Child(object):
 		self._weight = 10
 		self._transport = None
 	
+	def __str__(self):
+		return f" Child < {self._name} : {self._id} > "
+	
+	def __repr__(self):
+		return f" Child < {self._name} : {self._id} > "
+	
 	def setId(self,id):
 		self._id = id
 		

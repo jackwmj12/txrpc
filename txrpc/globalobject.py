@@ -21,14 +21,13 @@ Created on 2019-11-22
 '''
 import os
 from typing import Dict, List, Any
+
+from txrpc.distributed.manager import RemoteUnFindedError
 from txrpc.distributed.node import RemoteObject
 from txrpc.distributed.root import PBRoot
 from txrpc.service.service import Service
 from txrpc.utils import logger
 from txrpc.utils.singleton import Singleton
-
-class RemoteUnFindedError(Exception):
-    pass
 
 class GlobalObject(metaclass=Singleton):
 

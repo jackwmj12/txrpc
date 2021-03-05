@@ -140,7 +140,7 @@ class ServiceBase(object):
             
             elif asyncio.coroutines.iscoroutine(defer_data):
                 return Deferred.fromCoroutine(defer_data)
-
+            
             d = defer.Deferred()
             d.callback(defer_data)
         finally:

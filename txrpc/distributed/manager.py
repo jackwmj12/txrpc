@@ -220,7 +220,6 @@ class NodeManager(object):
         child = self.getChildById(childId=childId)
         if not child:
             logger.err("child %s doesn't exists" % childId)
-            # raise RemoteUnFindedError()
             return
         return child.callbackChild(*args,**kw)
     
@@ -235,7 +234,6 @@ class NodeManager(object):
         
         if not child:
             logger.err("child %s doesn't exists" % name)
-            # raise RemoteUnFindedError()
             return
         return child.callbackChild(*args,**kw)
         

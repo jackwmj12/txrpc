@@ -34,7 +34,6 @@ class GlobalObject(metaclass=Singleton):
     def __init__(self):
         self.config = {}  # 配置信息
         self.remote : Dict[str:RemoteObject] = {}  # REMOTE remote节点
-        self.remote_map : Dict[str:Dict[str,Any[str,int]]] = {}
         self.root : PBRoot = None
         
         self.starthandler = None #开始指令触发函数
@@ -54,7 +53,7 @@ class GlobalObject(metaclass=Singleton):
             return remote_obj
         else:
             raise RemoteUnFindedError
-
+        
 def rootserviceHandle(target):
     """
     将服务加入根节点

@@ -20,7 +20,7 @@ Created on 2019-11-22
  @desc：
     pb服务器
 '''
-
+from twisted.internet import defer
 from twisted.internet.defer import Deferred
 from twisted.spread import pb
 from txrpc.distributed.child import Child
@@ -35,8 +35,8 @@ class BilateralBroker(pb.Broker):
     def connectionLost(self, reason):
         clientID = self.transport.sessionno
         # logger.msg("node [%d] lose"%clientID)
-        self.factory.root.dropChildById(clientID)
-        pb.Broker.connectionLost(self, reason)
+        d = self.factory.root.dropChildById(clientID)
+        d.addCallback(lambda ign : pb.Broker.connectionLost(self, reason))
 
 class BilateralFactory(pb.PBServerFactory):
     
@@ -61,39 +61,44 @@ class PBRoot(pb.Root):
         '''
         self.service : Service = service
 
-    def doChildConnect(self,name,transport):
+    def doChildConnect(self,name,transport) -> Deferred:
         """
         当node节点连接时的处理
         """
+        defer_list = []
         try:
             logger.debug("node [%s] connect" % name)
             for service in self.childConnectService:
-                self.childConnectService.callTarget(service,name,transport)
+                # logger.debug("service [%s] connect" % service)
+                defer_list.append(self.childConnectService.callTarget(service,name,transport))
         except Exception as e:
             logger.err(str(e))
+        return defer.DeferredList(defer_list,consumeErrors=True)
             
-    def doChildLostConnect(self,childId):
+    def doChildLostConnect(self,childId) -> Deferred:
         """
         当node节点连接时的处理
         """
+        defer_list = []
         try:
             logger.debug("node [%s] lose" % childId)
             # del GlobalObject().remote[childId]
             for service in self.childLostConnectService:
-                self.childLostConnectService.callTarget(service,childId)
+                defer_list.append(self.childLostConnectService.callTarget(service,childId))
         except Exception as e:
             logger.err(str(e))
-    
+        return defer.DeferredList(defer_list, consumeErrors=True)
+
     def dropChild(self,*args,**kw):
         '''删除子节点记录'''
         self.dnsmanager.dropChild(*args,**kw)
         
-    def dropChildById(self,childId):
+    def dropChildById(self,childId) -> Deferred:
         '''删除子节点记录'''
         if self.dnsmanager.dropChildById(childId):
-            self.doChildLostConnect(childId)
+            return self.doChildLostConnect(childId)
         else:
-            self.doChildLostConnect(None)
+            return self.doChildLostConnect(None)
     
     def callChildByName(self,childname,*args,**kw)->Deferred:
         '''调用子节点的接口
@@ -122,8 +127,8 @@ class PBRoot(pb.Root):
         # logger.debug(self.dnsmanager._children.get("client").hand)
         # logger.debug(self.dnsmanager._children.get("client").handCur)
         child.setTransport(transport)
-        self.doChildConnect(name, transport)
-
+        return self.doChildConnect(name,transport)
+        
     def remote_callTarget(self, command, *args, **kw):
         '''
         远程调用方法

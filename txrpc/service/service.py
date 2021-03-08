@@ -24,9 +24,10 @@ import asyncio
 import inspect
 import threading
 from twisted.internet import defer,threads
-from twisted.internet.defer import Deferred
+from twisted.internet.defer import Deferred, fail, succeed
+from twisted.python import failure
 
-from txrpc.utils import logger
+from txrpc.utils import logger, as_deferred
 
 
 class ServiceBase(object):
@@ -129,20 +130,23 @@ class ServiceBase(object):
                 logger.debug(f"RPC : <remote> call method <{targetKey}> : <{target.__name__}> on service[single]")
 
             defer_data = target(*args,**kw)
-            if not defer_data:
-                return None
-
             if isinstance(defer_data, defer.Deferred):
-                return defer_data
-            
+                # logger.debug(f"{target.__name__} deferred")
+                d = defer_data
             elif inspect.isawaitable(defer_data):
-                return Deferred.fromFuture(asyncio.ensure_future(defer_data))
-            
+                # logger.debug(f"{target.__name__} awaitable")
+                d = as_deferred(defer_data)
             elif asyncio.coroutines.iscoroutine(defer_data):
-                return Deferred.fromCoroutine(defer_data)
-            
-            d = defer.Deferred()
-            d.callback(defer_data)
+                # logger.debug(f"{target.__name__} coroutine")
+                d = defer.Deferred.fromCoroutine(defer_data)
+            elif isinstance(defer_data, failure.Failure):
+                # logger.debug(f"{target.__name__} failure")
+                d = fail(defer_data)
+            else:
+                # logger.debug(f"{target.__name__} succeed")
+                d = succeed(defer_data)
+            # d = defer.Deferred()
+            # d.callback(defer_data)
         finally:
             self._lock.release()
         return d

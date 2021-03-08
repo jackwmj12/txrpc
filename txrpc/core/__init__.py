@@ -39,19 +39,18 @@ class RPC():
 		'''
 		:return
 		'''
-		self.startService = Service("startservice")
-		self.stopService = Service("endservice")
-		self.reloadService = Service("reloadservice")
+		self.startService = Service("startservice") # 程序开始时运行
+		self.stopService = Service("endservice")    # 程序结束时运行(暂无实现)
+		self.reloadService = Service("reloadservice") # 程序重载时运行
 		
-		from twisted.internet import reactor
-		
-		reactor.callWhenRunning(self._doWhenStart)
 	
 	def run(self):
 		'''
 		:return
 		'''
 		from twisted.internet import reactor
+		
+		reactor.callWhenRunning(self._doWhenStart)
 		
 		reactor.run()
 	
@@ -95,15 +94,26 @@ class RPC():
 		程序重载时,将会运行该服务
 		"""
 		self.reloadService.mapTarget(target)
-		
-	def _doWhenStart(self):
+	
+	def _doWhenStart(self) -> defer.Deferred:
+		defer_list = []
 		for service in self.startService:
-			self.startService.callTarget(service)
+			defer_list.append(self.startService.callTarget(service))
+		return defer.DeferredList(defer_list,consumeErrors=True)
 	
-	def _doWhenStop(self):
+	def _doWhenStop(self) -> defer.Deferred:
+		# for service in self.stopService:
+		# 	self.stopService.callTarget(service)
+		defer_list = []
 		for service in self.stopService:
-			self.stopService.callTarget(service)
+			defer_list.append(self.stopService.callTarget(service))
+		return defer.DeferredList(defer_list, consumeErrors=True)
 	
-	def _doWhenReload(self):
+	def _doWhenReload(self) -> defer.Deferred:
+		# for service in self.reloadService:
+		# 	self.reloadService.callTarget(service)
+		defer_list = []
 		for service in self.reloadService:
-			self.reloadService.callTarget(service)
+			defer_list.append(self.reloadService.callTarget(service))
+		return defer.DeferredList(defer_list, consumeErrors=True)
+	

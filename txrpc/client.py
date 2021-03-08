@@ -25,6 +25,8 @@
 #
 #
 #
+from twisted.internet import defer
+
 from txrpc.core import RPC
 from txrpc.distributed.node import RemoteObject
 from txrpc.globalobject import GlobalObject
@@ -42,14 +44,14 @@ class RPCClient(RPC):
 		:return
 		'''
 		super(RPCClient, self).__init__()
-		self.connectService = Service("connect_service")
+		self.connectService = Service("connect_service")  # rpc连接成功时运行
+		self.lostConnectService = Service("lost_connect_service")  # rpc连接断开时运行
 		self.name = name
 		
 	def clientConnect(self,name=None,host =None,port=None,weight=None,service_path=None):
 		'''
 		:param
 		'''
-		# logger.debug(GlobalObject().config.get("DISTRIBUTED").get(self.name))
 		
 		if not service_path:
 			self.service_path = GlobalObject().config.get("DISTRIBUTED").get(self.name).get("APP")
@@ -71,10 +73,7 @@ class RPCClient(RPC):
 		logger.debug("local<{name}> -> remote:<{target_name}>".format(name=self.name, target_name=name))
 		
 		self._connectRemote(name=self.name, target_name=name, host=host, port=port, weight=weight)
-		
-		if self.service_path:
-			self.registerService(self.service_path)
-		
+
 		return self
 	
 	@staticmethod
@@ -98,15 +97,26 @@ class RPCClient(RPC):
 		
 		remote = RemoteObject(name)
 		remote.setWeight(weight)
-		remote.connect((host, port))
 		GlobalObject().remote[target_name] = remote
-		
-		for service in self.connectService:
-			self.connectService.callTarget(service)
+		d = remote.connect((host, port))
+		d.addCallback(lambda ign : self._doWhenConnect())
+		d.addCallback(lambda ign : self.registerService(self.service_path))
 	
-	def doConnect(self, target):
-		'''
-
-		:param
-		'''
+	def connectServiceHandle(self, target):
 		self.connectService.mapTarget(target)
+	
+	def lostConnectServiceHandle(self, target):
+		self.lostConnectService.mapTarget(target)
+	
+	def _doWhenConnect(self) -> defer.Deferred:
+		defer_list = []
+		for service in self.connectService:
+			defer_list.append(self.connectService.callTarget(service))
+		return defer.DeferredList(defer_list, consumeErrors=True)
+	
+	def _doWhenLostConnect(self) -> defer.Deferred:
+		defer_list = []
+		for service in self.lostConnectService:
+			defer_list.append(self.lostConnectService.callTarget(service))
+		return defer.DeferredList(defer_list, consumeErrors=True)
+		

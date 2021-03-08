@@ -53,5 +53,5 @@ def asDeferred(f):
     
     return as_deferred
 
-def as_future(f):
-    return Deferred.asFuture(f)
+# def as_future(f):
+#     return Deferred.asFuture(f)

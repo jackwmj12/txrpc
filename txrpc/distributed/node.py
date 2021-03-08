@@ -22,7 +22,7 @@ Created on 2019-11-22
 '''
 
 from twisted.spread import pb
-from twisted.internet import reactor, defer
+from twisted.internet import defer
 from txrpc.distributed.reference import ProxyReference
 from txrpc.service.service import Service
 from txrpc.utils import logger
@@ -67,6 +67,8 @@ class RemoteObject(object):
         
     def connect(self,addr) -> defer.Deferred:
         '''初始化远程调用对象'''
+        from twisted.internet import reactor
+        
         self._addr = addr
         reactor.connectTCP(addr[0], addr[1], self._factory)
         return self.takeProxy()

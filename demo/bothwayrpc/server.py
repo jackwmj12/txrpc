@@ -1,8 +1,6 @@
 import json
 import os
 
-from twisted.internet import reactor
-
 import txrpc
 from txrpc.globalobject import GlobalObject
 from txrpc.utils import logger
@@ -31,6 +29,8 @@ def doChildConnect(name, transport):
     '''
     :return
     '''
+    from twisted.internet import reactor
+    
     logger.debug("{} connected".format(name))
     
     for i in range(1000):

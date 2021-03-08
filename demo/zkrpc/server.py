@@ -9,7 +9,7 @@ asyncioreactor.install(eventloop=loop)
 import os
 
 import aiozk
-from twisted.internet import reactor, defer
+from twisted.internet import defer
 
 from txrpc.globalobject import GlobalObject
 from txrpc.utils import asDeferred, logger
@@ -68,6 +68,7 @@ def doChildConnect(name, transport):
     '''
     :return
     '''
+    from twisted.internet import reactor
     logger.debug("{} connected".format(name))
     reactor.callLater(1, fun_)
 
@@ -77,6 +78,7 @@ def doChildLostConnect(childId):
     :return
     '''
     logger.debug("{} lost connect".format(childId))
-
+    
+from twisted.internet import reactor
 reactor.callLater(0.1,fun2_)
 server.run()

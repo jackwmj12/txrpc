@@ -1,4 +1,4 @@
-from twisted.internet import reactor
+
 
 from txrpc.globalobject import remoteserviceHandle
 from txrpc.client import RPCClient
@@ -12,6 +12,7 @@ def fun():
 
 @remoteserviceHandle("SERVER")
 def client_test():
+    from twisted.internet import reactor
     reactor.callLater(1, fun)
     return "this is a response from client"
 

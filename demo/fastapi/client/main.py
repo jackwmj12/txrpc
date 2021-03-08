@@ -49,10 +49,6 @@ def register_rpc(app: FastAPI) -> None:
         
         client = RPCClient("CLIENT").clientConnect()
         
-        
-        # from twisted.internet import reactor
-        
-        # reactor.run()
 
     @app.on_event('shutdown')
     async def shutdown_event():

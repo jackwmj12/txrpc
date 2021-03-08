@@ -1,8 +1,6 @@
 import json
 import os
 
-from twisted.internet import reactor
-
 import txrpc
 from txrpc.globalobject import GlobalObject
 from txrpc.utils import logger

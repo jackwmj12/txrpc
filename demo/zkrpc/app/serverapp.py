@@ -1,4 +1,3 @@
-from twisted.internet import reactor
 
 from txrpc.globalobject import remoteserviceHandle, rootserviceHandle
 

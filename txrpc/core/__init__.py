@@ -54,6 +54,11 @@ class RPC():
 		
 		reactor.run()
 	
+	def install(self):
+		from twisted.internet import reactor
+		
+		reactor.callWhenRunning(self._doWhenStart)
+	
 	def registerService(self, service_path: str):
 		'''
 		:return

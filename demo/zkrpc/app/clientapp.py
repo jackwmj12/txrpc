@@ -1,7 +1,7 @@
 import aiozk
 import os
 from txrpc.globalobject import remoteserviceHandle
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 @remoteserviceHandle("SERVER")
 async def client_test():

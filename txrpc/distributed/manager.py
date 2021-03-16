@@ -24,7 +24,7 @@ from typing import Dict, List, Union
 from zope.interface import Interface, implementer
 import numpy as np
 from txrpc.distributed.child import Child
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 class RemoteUnFindedError(Exception):
     pass
@@ -57,7 +57,7 @@ class Node():
             np.random.shuffle(self.hand)  # 洗牌
             logger.debug(f"append success , \nnodes {self.children}\nhand : {self.hand}")
         else:
-            logger.err("append failed , node %s is already exist" % child.getName())
+            logger.error("append failed , node %s is already exist" % child.getName())
     
     def remove(self,child : Child):
         '''
@@ -70,7 +70,7 @@ class Node():
             np.random.shuffle(self.hand)  # 洗牌
             logger.debug(f"remove success , \nnodes {self.children}\nhand : {self.hand}")
         else:
-            logger.err("remove failed , node %s is not exist" % child.getName())
+            logger.error("remove failed , node %s is not exist" % child.getName())
     
     def shuffle(self):
         '''
@@ -170,14 +170,14 @@ class NodeManager(object):
         @param child: Child object
         '''
         name = child.getName()
-        # logger.msg("node %s is connecting"%name)
+        # logger.info("node %s is connecting"%name)
         node : Node = self._nodes.get(name)
         if node:
             node.append(child)
         else:
             self._nodes[name] = Node(name)
             self._nodes[name].append(child)
-        # logger.msg("node %s is connected" % name)
+        # logger.info("node %s is connected" % name)
         
     def handShuffle(self,name):
         '''
@@ -187,7 +187,7 @@ class NodeManager(object):
         if node:
             node.shuffle()
         else:
-            logger.err("child nodes %s is not exist" % name)
+            logger.error("child nodes %s is not exist" % name)
         
     def dropChild(self,child):
         '''
@@ -198,7 +198,7 @@ class NodeManager(object):
         if node:
             node.remove(child)
         else:
-            logger.err("nodes %s is not exist " % child.getName())
+            logger.error("nodes %s is not exist " % child.getName())
             
     def dropChildById(self,childId : int) -> bool:
         '''
@@ -210,7 +210,7 @@ class NodeManager(object):
             self.dropChild(child)
             return True
         else:
-            logger.err("node[%s] is not exist" % childId)
+            logger.error("node[%s] is not exist" % childId)
         return False
             
     def callChildById(self,childId,*args,**kw):
@@ -219,7 +219,7 @@ class NodeManager(object):
         '''
         child = self.getChildById(childId=childId)
         if not child:
-            logger.err("child %s doesn't exists" % childId)
+            logger.error("child %s doesn't exists" % childId)
             return
         return child.callbackChild(*args,**kw)
     
@@ -227,13 +227,13 @@ class NodeManager(object):
         '''调用子节点的接口
         @param name: str 子节点的名称
         '''
-        logger.debug("调用服务，请求：{} 服务".format(name))
-        logger.debug("参数为：{}".format(args))
+        # logger.debug("调用服务，请求：{} 服务".format(name))
+        # logger.debug("参数为：{}".format(args))
 
         child = self.getChildByName(name)
         
         if not child:
-            logger.err("child %s doesn't exists" % name)
+            logger.error("child %s doesn't exists" % name)
             return
         return child.callbackChild(*args,**kw)
         

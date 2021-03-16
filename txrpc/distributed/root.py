@@ -27,14 +27,14 @@ from txrpc.distributed.child import Child
 from txrpc.distributed.manager import NodeManager
 
 from txrpc.service.service import Service
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 
 class BilateralBroker(pb.Broker):
     
     def connectionLost(self, reason):
         clientID = self.transport.sessionno
-        # logger.msg("node [%d] lose"%clientID)
+        # logger.info("node [%d] lose"%clientID)
         d = self.factory.root.dropChildById(clientID)
         d.addCallback(lambda ign : pb.Broker.connectionLost(self, reason))
 
@@ -72,7 +72,7 @@ class PBRoot(pb.Root):
                 # logger.debug("service [%s] connect" % service)
                 defer_list.append(self.childConnectService.callTarget(service,name,transport))
         except Exception as e:
-            logger.err(str(e))
+            logger.error(str(e))
         return defer.DeferredList(defer_list,consumeErrors=True)
             
     def doChildLostConnect(self,childId) -> Deferred:
@@ -86,7 +86,7 @@ class PBRoot(pb.Root):
             for service in self.childLostConnectService:
                 defer_list.append(self.childLostConnectService.callTarget(service,childId))
         except Exception as e:
-            logger.err(str(e))
+            logger.error(str(e))
         return defer.DeferredList(defer_list, consumeErrors=True)
 
     def dropChild(self,*args,**kw):

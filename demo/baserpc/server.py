@@ -1,7 +1,7 @@
 import json
 import os
 from txrpc.globalobject import GlobalObject
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 from txrpc.server import RPCServer
 
 NODE_NAME = "SERVER"
@@ -9,14 +9,12 @@ NODE_NAME = "SERVER"
 with open(os.sep.join([os.path.dirname(os.path.abspath(__file__)),"config.json"])) as f:
     GlobalObject().config = json.load(f)
 
-logger.init()
-
 def fun():
     d = RPCServer.callRemote("CLIENT", "client_test")
     if not d:
         return None
     d.addCallback(logger.debug)
-    d.addErrback(logger.err)
+    d.addErrback(logger.error)
     return d
 
 app = RPCServer(NODE_NAME)

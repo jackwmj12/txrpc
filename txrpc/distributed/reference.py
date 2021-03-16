@@ -23,7 +23,7 @@ Created on 2019-11-22
 
 from twisted.spread import pb
 from txrpc.service.service import Service
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 
 class ProxyReference(pb.Referenceable):

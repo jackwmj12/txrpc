@@ -31,7 +31,8 @@ from twisted.internet import defer
 
 from txrpc.service.service import Service
 from txrpc.globalobject import GlobalObject
-from txrpc.utils import delay_import, logger
+from txrpc.utils import delay_import
+from txrpc.utils.log import logger
 
 class RPC():
 	
@@ -74,7 +75,7 @@ class RPC():
 		
 		socket.setdefaulttimeout(GlobalObject().config.get("SOCKET_TIME_OUT", 60))
 		
-		logger.msg("初始化socket超时时间为：{}".format(GlobalObject().config.get("SOCKET_TIME_OUT", 60)))
+		logger.info("初始化socket超时时间为：{}".format(GlobalObject().config.get("SOCKET_TIME_OUT", 60)))
 		
 		from twisted.internet import reactor
 		

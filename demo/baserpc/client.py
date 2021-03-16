@@ -2,7 +2,7 @@ import json
 import os
 
 from txrpc.globalobject import GlobalObject
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 from txrpc.client import RPCClient
 
 NODE_NAME = "CLIENT"

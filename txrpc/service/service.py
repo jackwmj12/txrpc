@@ -27,7 +27,8 @@ from twisted.internet import defer,threads
 from twisted.internet.defer import Deferred, fail, succeed
 from twisted.python import failure
 
-from txrpc.utils import logger, as_deferred
+from txrpc.utils import as_deferred
+from txrpc.utils.log import logger
 
 
 class ServiceBase(object):
@@ -93,7 +94,7 @@ class ServiceBase(object):
         """Get a target from the service by name."""
         self._lock.acquire()
         try:
-            # logger.msg("共有服务target：{}".format(self._targets))
+            # logger.info("共有服务target：{}".format(self._targets))
             target = self._targets.get(targetKey, None)
         finally:
             self._lock.release()
@@ -124,7 +125,7 @@ class ServiceBase(object):
         self._lock.acquire()
         try:
             if not target:
-                logger.err('the command ' + str(targetKey) + ' not Found on service in ' + self._name)
+                logger.error('the command ' + str(targetKey) + ' not Found on service in ' + self._name)
                 return None
             if targetKey not in self.unDisplay:
                 logger.debug(f"RPC : <remote> call method <{targetKey}> : <{target.__name__}> on service[single]")
@@ -161,7 +162,7 @@ class ServiceBase(object):
         try:
             target = self.getTarget(targetKey)
             if not target:
-                logger.err('the command ' + str(targetKey) + ' not Found on service in ' + self._name)
+                logger.error('the command ' + str(targetKey) + ' not Found on service in ' + self._name)
                 return None
             logger.debug("RPC : <remote> call method <%s> on service[parallel]" % target.__name__)
             d = threads.deferToThread(target,*args,**kw)
@@ -261,7 +262,7 @@ class Service(ServiceBase):
 #         """Get a target from the service by name."""
 #         self._lock.acquire()
 #         try:
-#             # logger.msg("共有服务target：{}".format(self._targets))
+#             # logger.info("共有服务target：{}".format(self._targets))
 #             target = self._targets.get(targetKey, None)
 #         finally:
 #             self._lock.release()
@@ -292,7 +293,7 @@ class Service(ServiceBase):
 #         self._lock.acquire()
 #         try:
 #             if not target:
-#                 logger.err('the command ' + str(targetKey) + ' not Found on service in ' + self._name)
+#                 logger.error('the command ' + str(targetKey) + ' not Found on service in ' + self._name)
 #                 return None
 #             if targetKey not in self.unDisplay:
 #                 logger.debug("RPC : <remote> call method <%s> on service[single]" % target.__name__)
@@ -324,7 +325,7 @@ class Service(ServiceBase):
 #         try:
 #             target = self.getTarget(targetKey)
 #             if not target:
-#                 logger.err('the command ' + str(targetKey) + ' not Found on service in ' + self._name)
+#                 logger.error('the command ' + str(targetKey) + ' not Found on service in ' + self._name)
 #                 return None
 #             logger.debug("RPC : <remote> call method <%s> on service[parallel]" % target.__name__)
 #             d = threads.deferToThread(target,*args,**kw)

@@ -2,10 +2,7 @@ import asyncio
 from functools import wraps
 from imp import reload
 import sys
-
 from twisted.internet.defer import Deferred
-
-from txrpc.utils import logger
 
 
 def delay_import(modules, delay=0.1):
@@ -17,7 +14,7 @@ def delay_import(modules, delay=0.1):
     def __import(modules):
         ''':param
         '''
-        logger.debug("即将导入模块 : <{modules}>".format(modules=modules))
+        # logger.debug("即将导入模块 : <{modules}>".format(modules=modules))
         if modules:
             if isinstance(modules, (list, tuple)):
                 for module in modules:

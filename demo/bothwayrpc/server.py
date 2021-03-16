@@ -3,11 +3,11 @@ import os
 
 import txrpc
 from txrpc.globalobject import GlobalObject
-from txrpc.utils import logger
+from txrpc.utils import log
 
 from txrpc.server import RPCServer
 
-logger.init()
+logger = log.init()
 
 # logger.debug(os.sep.join([os.path.dirname(os.path.abspath(__file__)),"config.json"]))
 
@@ -19,7 +19,7 @@ def fun():
     if not d:
         return None
     d.addCallback(logger.debug)
-    d.addErrback(logger.err)
+    d.addErrback(logger.error)
     return d
 
 server = RPCServer("SERVER")
@@ -31,7 +31,7 @@ def doChildConnect(name, transport):
     '''
     from twisted.internet import reactor
     
-    logger.debug("{} connected".format(name))
+    log.debug("{} connected".format(name))
     
     for i in range(1000):
         reactor.callLater(i * 2 + 1, fun)
@@ -41,6 +41,6 @@ def doChildLostConnect(childId):
     '''
     :return
     '''
-    logger.debug("{} lost connect".format(childId))
+    log.debug("{} lost connect".format(childId))
 
 txrpc.run()

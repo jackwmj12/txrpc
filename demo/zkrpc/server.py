@@ -12,15 +12,15 @@ import aiozk
 from twisted.internet import defer
 
 from txrpc.globalobject import GlobalObject
-from txrpc.utils import asDeferred, logger
+from txrpc.utils import asDeferred
 from txrpc.server import RPCServer
+
+from loguru import logger
 
 NODE_NAME = "SERVER"
 
 with open(os.sep.join([os.path.dirname(os.path.abspath(__file__)),"config.json"])) as f:
     GlobalObject().config = json.load(f)
-
-logger.init()
 
 zk = aiozk.ZKClient('{}:2181'.format(os.environ.get("TEST_ZK_HOST")))
 
@@ -30,7 +30,7 @@ async def data_callback(d):
     # try:
     #     await zk.delete('/greeting/to/words')
     # except Exception as e:
-    #     logger.err(e)
+    #     logger.error(e)
 
 @asDeferred
 async def create_zk_water():
@@ -50,7 +50,7 @@ def fun2_():
         ret = yield create_zk_water()
         defer.returnValue(ret)
     except Exception as e:
-        logger.err(e)
+        logger.error(e)
         defer.returnValue(None)
 
 def fun_():
@@ -58,7 +58,7 @@ def fun_():
     if not d:
         return None
     d.addCallback(logger.debug)
-    d.addErrback(logger.err)
+    d.addErrback(logger.error)
     return d
 
 server = RPCServer("SERVER")

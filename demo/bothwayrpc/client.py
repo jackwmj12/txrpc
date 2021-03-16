@@ -3,7 +3,7 @@ import os
 
 import txrpc
 from txrpc.globalobject import GlobalObject
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 from txrpc.client import RPCClient
 from txrpc.server import RPCServer
 

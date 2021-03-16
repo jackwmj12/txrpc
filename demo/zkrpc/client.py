@@ -9,14 +9,12 @@ asyncioreactor.install(eventloop=loop)
 
 from txrpc.client import RPCClient
 
-from txrpc.utils import logger
+from loguru import logger
 
 from txrpc.globalobject import GlobalObject
 
 with open(os.sep.join([os.path.dirname(os.path.abspath(__file__)),"config.json"])) as f:
     GlobalObject().config = json.load(f)
-
-logger.init()
 
 NODE_NAME = "CLIENT"
 

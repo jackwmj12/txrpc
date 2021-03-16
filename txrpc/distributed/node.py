@@ -25,7 +25,7 @@ from twisted.spread import pb
 from twisted.internet import defer
 from txrpc.distributed.reference import ProxyReference
 from txrpc.service.service import Service
-from txrpc.utils import logger
+from txrpc.utils.log import logger
 
 class RpcClientFactory(pb.PBClientFactory):
     
@@ -92,7 +92,7 @@ class RemoteObject(object):
         '''
         远程调用
         '''
-        logger.debug("RPC : call <remote> method <{}>".format(commandId))
+        logger.debug(f"RPC : call <remote> method <{commandId}> with args = {args} kwargs = {kw}")
         deferedRemote = self._factory.getRootObject()
         return deferedRemote.addCallback(_callRemote,'callTarget',commandId,*args,**kw)
     

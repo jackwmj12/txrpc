@@ -53,7 +53,7 @@ class GlobalObject(metaclass=Singleton):
             return remote_obj
         else:
             raise RemoteUnFindedError
-        
+    
 def rootserviceHandle(target):
     """
     将服务加入根节点

@@ -20,9 +20,9 @@ Created on 2019-11-22
  @desc：
     root节点
 '''
+import random
 from typing import Dict, List, Union
 from zope.interface import Interface, implementer
-import numpy as np
 from txrpc.distributed.child import Child
 from txrpc.utils.log import logger
 
@@ -54,7 +54,7 @@ class Node():
             self.handCur = 0
             hand = [child for _ in range(child.getWeight())]
             self.hand.extend(hand)
-            np.random.shuffle(self.hand)  # 洗牌
+            random.shuffle(self.hand)  # 洗牌
             logger.debug(f"append success , \nnodes {self.children}\nhand : {self.hand}")
         else:
             logger.error("append failed , node %s is already exist" % child.getName())
@@ -67,7 +67,7 @@ class Node():
             self.children.remove(child)
             self.handCur = 0
             self.hand = [item for item in self.hand if item != child] #
-            np.random.shuffle(self.hand)  # 洗牌
+            random.shuffle(self.hand)  # 洗牌
             logger.debug(f"remove success , \nnodes {self.children}\nhand : {self.hand}")
         else:
             logger.error("remove failed , node %s is not exist" % child.getName())
@@ -76,7 +76,7 @@ class Node():
         '''
         :param
         '''
-        np.random.shuffle(self.hand)  # 洗牌
+        random.shuffle(self.hand)  # 洗牌 
         self.handCur = 0
     
     def getChild(self):

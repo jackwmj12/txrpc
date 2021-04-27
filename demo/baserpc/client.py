@@ -2,15 +2,13 @@ import json
 import os
 
 from txrpc.globalobject import GlobalObject
-from txrpc.utils.log import logger
+from loguru import logger
 from txrpc.client import RPCClient
 
 NODE_NAME = "CLIENT"
 
 with open(os.sep.join([os.path.dirname(os.path.abspath(__file__)),"config.json"])) as f:
     GlobalObject().config = json.load(f)
-
-logger.init()
 
 app = RPCClient(name=NODE_NAME).clientConnect()
 

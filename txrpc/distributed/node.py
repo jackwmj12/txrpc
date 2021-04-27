@@ -25,7 +25,7 @@ from twisted.spread import pb
 from twisted.internet import defer
 from txrpc.distributed.reference import ProxyReference
 from txrpc.service.service import Service
-from txrpc.utils.log import logger
+from loguru import logger
 
 class RpcClientFactory(pb.PBClientFactory):
     

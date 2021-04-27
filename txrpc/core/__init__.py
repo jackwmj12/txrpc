@@ -32,7 +32,7 @@ from twisted.internet import defer
 from txrpc.service.service import Service
 from txrpc.globalobject import GlobalObject
 from txrpc.utils import delay_import
-from txrpc.utils.log import logger
+from loguru import logger
 
 class RPC():
 	

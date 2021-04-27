@@ -1,7 +1,7 @@
 import json
 import os
 from txrpc.globalobject import GlobalObject
-from txrpc.utils.log import logger
+from loguru import logger
 from txrpc.server import RPCServer
 
 NODE_NAME = "SERVER"

@@ -40,12 +40,10 @@ def register_rpc(app: FastAPI) -> None:
         from twisted.internet import reactor
 
         from txrpc.globalobject import GlobalObject
-        from txrpc.utils.log import logger
+        from loguru import logger
 
         with open(os.sep.join([os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config.json"])) as f:
             GlobalObject().config = json.load(f)
-
-        logger.init()
         
         global server
         

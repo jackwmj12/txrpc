@@ -3,6 +3,8 @@ import os
 
 from fastapi import FastAPI
 
+from loguru import logger
+
 client = None
 
 app = FastAPI()
@@ -36,12 +38,9 @@ def register_rpc(app: FastAPI) -> None:
         asyncioreactor.install(eventloop=loop)
 
         from txrpc.globalobject import GlobalObject
-        from txrpc.utils.log import logger
 
         with open(os.sep.join([os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config.json"])) as f:
             GlobalObject().config = json.load(f)
-
-        logger.init()
         
         from txrpc.client import RPCClient
         

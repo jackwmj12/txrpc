@@ -29,7 +29,7 @@ from txrpc.core import RPC
 from txrpc.service.service import Service
 from txrpc.distributed.root import BilateralFactory, PBRoot
 from txrpc.globalobject import GlobalObject
-from txrpc.utils.log import logger
+from loguru import logger
 
 
 class RPCServer(RPC):

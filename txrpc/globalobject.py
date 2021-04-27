@@ -26,7 +26,7 @@ from txrpc.distributed.manager import RemoteUnFindedError
 from txrpc.distributed.node import RemoteObject
 from txrpc.distributed.root import PBRoot
 from txrpc.service.service import Service
-from txrpc.utils.log import logger
+from loguru import logger
 from txrpc.utils.singleton import Singleton
 
 class GlobalObject(metaclass=Singleton):
@@ -54,6 +54,12 @@ class GlobalObject(metaclass=Singleton):
         else:
             raise RemoteUnFindedError
     
+    def set(self,name,value):
+        setattr(self, name, value)
+    
+    def get(self,name,default):
+        return getattr(self,name,default)
+        
 def rootserviceHandle(target):
     """
     将服务加入根节点

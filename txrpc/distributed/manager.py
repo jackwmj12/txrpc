@@ -24,7 +24,7 @@ import random
 from typing import Dict, List, Union
 from zope.interface import Interface, implementer
 from txrpc.distributed.child import Child
-from txrpc.utils.log import logger
+from loguru import logger
 
 class RemoteUnFindedError(Exception):
     pass

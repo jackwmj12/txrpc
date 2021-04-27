@@ -27,7 +27,7 @@ from txrpc.distributed.child import Child
 from txrpc.distributed.manager import NodeManager
 
 from txrpc.service.service import Service
-from txrpc.utils.log import logger
+from loguru import logger
 
 
 class BilateralBroker(pb.Broker):

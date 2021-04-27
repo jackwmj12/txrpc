@@ -28,8 +28,7 @@ from twisted.internet.defer import Deferred, fail, succeed
 from twisted.python import failure
 
 from txrpc.utils import as_deferred
-from txrpc.utils.log import logger
-
+from loguru import logger
 
 class ServiceBase(object):
     """A remoting service

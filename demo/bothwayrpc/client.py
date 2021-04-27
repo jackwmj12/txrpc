@@ -3,14 +3,12 @@ import os
 
 import txrpc
 from txrpc.globalobject import GlobalObject
-from txrpc.utils.log import logger
 from txrpc.client import RPCClient
 from txrpc.server import RPCServer
+from loguru import logger
 
 with open(os.sep.join([os.path.dirname(os.path.abspath(__file__)),"config.json"])) as f:
     GlobalObject().config = json.load(f)
-
-logger.init()
 
 server = RPCServer("CLIENT_SERVER")
 

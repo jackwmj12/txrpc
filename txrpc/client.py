@@ -31,7 +31,7 @@ from txrpc.core import RPC
 from txrpc.distributed.node import RemoteObject
 from txrpc.globalobject import GlobalObject
 from txrpc.service.service import Service
-from txrpc.utils.log import logger
+from loguru import logger
 
 
 class RPCClient(RPC):

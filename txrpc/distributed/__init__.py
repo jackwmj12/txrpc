@@ -19,6 +19,12 @@ Created on 2019-11-22
                  神兽保佑，代码无BUG!
  @desc：
     分布式布局模块包
+                   ---------- leaf1
+                  |
+        root -- node(leaf) -- leaf2
+        
+        root call node -> callChildByName("leaf",...)
+        root call leaf1 -> callChildById("leaf1",...)
 '''
 
 # 导入master服务，该服务主要提供

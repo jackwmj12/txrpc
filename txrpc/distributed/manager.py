@@ -32,7 +32,7 @@ class RemoteUnFindedError(Exception):
 class Node():
     def __init__(self, name):
         '''
-        初始化子节点对象
+            初始化子节点对象
         '''
         self.name = name
         self.hand : List[int] = []
@@ -74,14 +74,15 @@ class Node():
     
     def shuffle(self):
         '''
+            洗牌
         :param
         '''
-        random.shuffle(self.hand)  # 洗牌 
+        random.shuffle(self.hand)
         self.handCur = 0
     
     def getChild(self):
         '''
-        
+            获取子节点
         :return:
         '''
         if self.children and self.hand:
@@ -133,7 +134,10 @@ class NodeManager(object):
     def __init__(self):
         '''初始化子节点管理器'''
         self._nodes : Dict[str:Node] = {}
-        
+    
+    def getNodes(self) -> Dict:
+        return self._nodes
+    
     def getNode(self,name) -> Union[Node,None]:
         '''
         :param
@@ -149,6 +153,9 @@ class NodeManager(object):
         '''
         for node in self._nodes.values():
             for child in node.children:
+                logger.debug(child)
+                logger.debug(child.getId())
+                logger.debug(childId)
                 if child.getId() == childId:
                     return child
         return None

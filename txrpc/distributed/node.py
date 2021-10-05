@@ -60,13 +60,24 @@ class RemoteObject(object):
         return self._name
         
     def getWeight(self):
+        '''
+            获取节点权重
+        :return:
+        '''
         return self._weight
     
     def setWeight(self,weight):
+        '''
+            设置节点权重
+        :param weight:
+        :return:
+        '''
         self._weight = weight
         
     def connect(self,addr) -> defer.Deferred:
-        '''初始化远程调用对象'''
+        '''
+            初始化并连接 server 节点
+        '''
         from twisted.internet import reactor
         
         self._addr = addr
@@ -74,23 +85,27 @@ class RemoteObject(object):
         return self.takeProxy()
         
     def reconnect(self):
-        '''重新连接'''
+        '''
+            重新连接
+        '''
         self.connect(self._addr)
         
     def addServiceChannel(self,service):
-        '''设置引用对象'''
+        '''
+            设置引用对象
+        '''
         self._reference.addService(service)
     
     def takeProxy(self) -> defer.Deferred:
         '''
-        向远程服务端发送代理通道对象
+            向远程服务端发送代理通道对象
         '''
         deferedRemote = self._factory.getRootObject()
         return deferedRemote.addCallback(_callRemote,'takeProxy',self._name,self._weight,self._reference).addCallback(self.doWhenConnect)
     
     def callRemote(self,commandId,*args,**kw):
         '''
-        远程调用
+            远程调用
         '''
         logger.debug(f"RPC : call <remote> method <{commandId}> with args = {args} kwargs = {kw}")
         deferedRemote = self._factory.getRootObject()
@@ -98,19 +113,22 @@ class RemoteObject(object):
     
     def doWhenConnect(self,ign=None):
         '''
-        :param
+            连接成功后触发
+            :param
         '''
         self._doWhenConnect()
         
     def _doWhenConnect(self):
         '''
+            连接成功后触发
         :param
         '''
         for service in self.connectedService:
             self.connectedService.callTarget(service)
         
 def _callRemote(obj:RemoteObject,funcName:str,*args,**kw):
-    '''远程调用
+    '''
+    远程调用
     @param funcName: str 远程方法
     '''
     return obj.callRemote(funcName, *args,**kw)

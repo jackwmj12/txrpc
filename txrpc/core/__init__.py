@@ -38,76 +38,85 @@ class RPC():
 	
 	def __init__(self):
 		'''
-		:return
+			:return
 		'''
+		GlobalObject().node = self
 		self.startService = Service("startservice") # 程序开始时运行
 		self.stopService = Service("endservice")    # 程序结束时运行(暂无实现)
 		self.reloadService = Service("reloadservice") # 程序重载时运行
-		
 	
 	def run(self):
 		'''
-		:return
+			:return
 		'''
 		from twisted.internet import reactor
-		
 		reactor.callWhenRunning(self._doWhenStart)
-		
 		reactor.run()
 	
 	def install(self):
+		'''
+			:param
+		'''
 		from twisted.internet import reactor
-		
 		reactor.callWhenRunning(self._doWhenStart)
 	
 	def registerService(self, service_path: str):
 		'''
-		:return
+			:return
 		'''
 		logger.debug(f"即将导入模块:{service_path}")
 		delay_import(service_path)
 	
 	def twisted_init(self):
 		'''
-		# 初始化socket超时时间
+			初始化socket超时时间
 		:param
 		'''
 		
 		socket.setdefaulttimeout(GlobalObject().config.get("SOCKET_TIME_OUT", 60))
-		
 		logger.info("初始化socket超时时间为：{}".format(GlobalObject().config.get("SOCKET_TIME_OUT", 60)))
-		
 		from twisted.internet import reactor
-		
 		reactor.suggestThreadPoolSize(GlobalObject().config.get("TWISTED_THREAD_POOL", 8))  # 设置线程池数量
 	
 	def startServiceHandle(self, target):
 		"""
-		程序运行时,将会运行该服务
-		:param 
-			function()
+			注册程序停止触发函数的handler
+		:param target: 函数
+		:return:
 		"""
 		self.startService.mapTarget(target)
 	
 	def stopServiceHandle(self, target):
 		"""
-		程序结束时,将会运行该服务
+			注册程序停止触发函数的handler
+		:param target: 函数
+		:return:
 		"""
 		self.stopService.mapTarget(target)
 	
 	def reloadServiceHandle(self, target):
 		"""
-		程序重载时,将会运行该服务
+			注册程序重载触发函数的handler
+		:param target: 函数
+		:return:
 		"""
 		self.reloadService.mapTarget(target)
 	
 	def _doWhenStart(self) -> defer.Deferred:
+		'''
+			程序开始时,将会运行该函数
+		:return:
+		'''
 		defer_list = []
 		for service in self.startService:
 			defer_list.append(self.startService.callTarget(service))
 		return defer.DeferredList(defer_list,consumeErrors=True)
 	
 	def _doWhenStop(self) -> defer.Deferred:
+		'''
+			程序停止时,将会运行该服务
+		:return:
+		'''
 		# for service in self.stopService:
 		# 	self.stopService.callTarget(service)
 		defer_list = []
@@ -116,8 +125,10 @@ class RPC():
 		return defer.DeferredList(defer_list, consumeErrors=True)
 	
 	def _doWhenReload(self) -> defer.Deferred:
-		# for service in self.reloadService:
-		# 	self.reloadService.callTarget(service)
+		'''
+			程序重载时,将会运行该服务
+		:return:
+		'''
 		defer_list = []
 		for service in self.reloadService:
 			defer_list.append(self.reloadService.callTarget(service))

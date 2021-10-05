@@ -41,7 +41,8 @@ class RPCClient(RPC):
 	
 	def __init__(self,name = None):
 		'''
-		:return
+		
+		:param name: 节点名称
 		'''
 		super(RPCClient, self).__init__()
 		self.connectService = Service("connect_service")  # rpc连接成功时运行
@@ -50,14 +51,19 @@ class RPCClient(RPC):
 		
 	def clientConnect(self,name=None,host =None,port=None,weight=None,service_path=None):
 		'''
-		:param
+			连接 远端 节点
+		:param name:  本节点名称
+		:param host:  server节点host
+		:param port:  server节点port
+		:param weight:  本节点权重
+		:param service_path:  本节点服务地址
+		:return:
 		'''
 		
 		if not service_path:
 			self.service_path = GlobalObject().config.get("DISTRIBUTED").get(self.name).get("APP")
 		else:
 			self.service_path = service_path
-		
 		if not name:
 			name = GlobalObject().config.get("DISTRIBUTED").get(self.name).get("REMOTE").get("NAME")
 		
@@ -79,16 +85,24 @@ class RPCClient(RPC):
 	@staticmethod
 	def callRemote(remoteName: str, functionName: str, *args, **kwargs):
 		'''
-		:param
+			调用远端节点
+		:param remoteName: 节点名称
+		:param functionName:  函数名称
+		:param args:  参数1
+		:param kwargs:  参数2
+		:return:
 		'''
 		return GlobalObject().getRemote(remoteName).callRemote(functionName, *args, **kwargs)
 	
 	def _connectRemote(self, name: str, target_name: str, host: str, port: int, weight: int = 10):
 		'''
-			控制 节点 连接 另一个节点
-			:param name:  当前节点名称
-			:param remote_name:  需要连接的节点名称
-			:return:
+			连接 远端 节点
+		:param name: 本节点名称
+		:param target_name: 远端节点名称
+		:param host: 远端节点host
+		:param port:  远端节点port
+		:param weight:  本节点权重
+		:return:
 		'''
 		assert name != None, "local 名称不能为空"
 		assert port != None, "port 不能为空"
@@ -97,24 +111,42 @@ class RPCClient(RPC):
 		
 		remote = RemoteObject(name)
 		remote.setWeight(weight)
-		GlobalObject().remote[target_name] = remote
+		GlobalObject().remote_map[target_name] = remote
 		d = remote.connect((host, port))
 		d.addCallback(lambda ign : self._doWhenConnect())
 		d.addCallback(lambda ign : self.registerService(self.service_path))
 	
 	def connectServiceHandle(self, target):
+		'''
+			注册连接成功时触发函数的handler
+		:param target: 函数
+		:return:
+		'''
 		self.connectService.mapTarget(target)
 	
 	def lostConnectServiceHandle(self, target):
+		'''
+			注册连接断开时触发函数的handler
+		:param target: 函数
+		:return:
+		'''
 		self.lostConnectService.mapTarget(target)
 	
 	def _doWhenConnect(self) -> defer.Deferred:
+		'''
+			连接成功时触发
+		:return:
+		'''
 		defer_list = []
 		for service in self.connectService:
 			defer_list.append(self.connectService.callTarget(service))
 		return defer.DeferredList(defer_list, consumeErrors=True)
 	
 	def _doWhenLostConnect(self) -> defer.Deferred:
+		'''
+			连接断开时触发
+		:return:
+		'''
 		defer_list = []
 		for service in self.lostConnectService:
 			defer_list.append(self.lostConnectService.callTarget(service))

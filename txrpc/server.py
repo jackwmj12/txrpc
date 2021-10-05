@@ -52,35 +52,44 @@ class RPCServer(RPC):
 		if not port:
 			port = int(GlobalObject().config.get("DISTRIBUTED").get(name).get("PORT"))
 		
-		GlobalObject().root = PBRoot()
+		self.pbRoot = PBRoot()
 		
 		from twisted.internet import reactor
 		
-		reactor.listenTCP(port, BilateralFactory(GlobalObject().root))
+		reactor.listenTCP(port, BilateralFactory(self.pbRoot))
 		
 		service = Service(name=name)
 		
 		# 将服务添加到root
-		GlobalObject().root.addServiceChannel(service)
+		self.pbRoot.addServiceChannel(service)
 		
 		if self.service_path:
 			self.registerService(self.service_path)
 	
 	def childConnectHandle(self, target):
 		"""
-		程序运行时,将会运行该服务
+			注册子节点连接触发触发函数的handler
+		:param target: 函数
+		:return:
 		"""
-		GlobalObject().root.childConnectService.mapTarget(target)
+		self.pbRoot.childConnectService.mapTarget(target)
 	
 	def childLostConnectHandle(self, target):
 		"""
-		程序结束时,将会运行该服务
+			注册子节点断开触发触发函数的handler
+		:param target:
+		:return:
 		"""
-		GlobalObject().root.childLostConnectService.mapTarget(target)
+		self.pbRoot.childLostConnectService.mapTarget(target)
 	
 	@staticmethod
 	def callRemote(remoteName: str, functionName: str, *args, **kwargs):
 		'''
-		:param
+			调用子节点挂载的函数
+		:param remoteName:  节点名称
+		:param functionName: 方法名称
+		:param args:  参数
+		:param kwargs:  参数
+		:return:
 		'''
-		return GlobalObject().root.callChildByName(remoteName, functionName, *args, **kwargs)
+		return GlobalObject().node.pbRoot.callChildByName(remoteName, functionName, *args, **kwargs)

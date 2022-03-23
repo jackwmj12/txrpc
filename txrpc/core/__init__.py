@@ -28,6 +28,7 @@
 import socket
 
 from twisted.internet import defer
+from typing import List, Union
 
 from txrpc.service.service import Service
 from txrpc.globalobject import GlobalObject
@@ -41,6 +42,7 @@ class RPC():
 			:return
 		'''
 		GlobalObject().node = self
+		self.service_path : Union[List[str],None] = None
 		self.startService = Service("startservice") # 程序开始时运行
 		self.stopService = Service("endservice")    # 程序结束时运行(暂无实现)
 		self.reloadService = Service("reloadservice") # 程序重载时运行
@@ -60,12 +62,13 @@ class RPC():
 		from twisted.internet import reactor
 		reactor.callWhenRunning(self._doWhenStart)
 	
-	def registerService(self, service_path: str):
+	def registerService(self, service_path: Union[List[str],str,None]):
 		'''
 			:return
 		'''
-		logger.debug(f"即将导入模块:{service_path}")
-		delay_import(service_path)
+		if service_path:
+			logger.debug(f"即将导入模块:{service_path}")
+			delay_import(service_path)
 	
 	def twisted_init(self):
 		'''
@@ -117,8 +120,6 @@ class RPC():
 			程序停止时,将会运行该服务
 		:return:
 		'''
-		# for service in self.stopService:
-		# 	self.stopService.callTarget(service)
 		defer_list = []
 		for service in self.stopService:
 			defer_list.append(self.stopService.callTarget(service))
@@ -129,6 +130,7 @@ class RPC():
 			程序重载时,将会运行该服务
 		:return:
 		'''
+		self.registerService(self.service_path)
 		defer_list = []
 		for service in self.reloadService:
 			defer_list.append(self.reloadService.callTarget(service))

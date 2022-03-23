@@ -65,7 +65,7 @@ class ServiceBase(object):
             key = target.__name__
             if key in self._targets.keys():
                 exist_target = self._targets.get(key)
-                raise Exception(f"target {key} Already exists,Conflict between the {exist_target.__name__} and {target.__name__}")
+                logger.warning("target [%s] Already exists, [%s] will be covered by [%s]" % (key, exist_target.__class__.__name__, target.__class__.__name__))
             logger.debug(f"Service:<{self._name}> {key} 注册成功")
             self._targets[key] = target
         finally:
@@ -180,9 +180,7 @@ class Service(ServiceBase):
             key = (target.__name__).split('__')[-1]
             if key in self._targets.keys():
                 exist_target = self._targets.get(key)
-                logger.error("target [%s] Already exists,\
-                 Conflict between the %s and %s"%(key,exist_target.__name__,target.__name__))
-                raise "target [%s] Already exists,Conflict between the %s and %s"%(key,exist_target.__name__,target.__name__)
+                logger.warning("target [%s] Already exists, [%s] will be covered by [%s]" % (key, exist_target.__class__.__name__, target.__class__.__name__))
             logger.debug("当前服务器 CommandService:<{}> {} 注册成功".format(self._name, key))
             self._targets[key] = target
         finally:

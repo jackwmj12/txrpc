@@ -153,9 +153,6 @@ class NodeManager(object):
         '''
         for node in self._nodes.values():
             for child in node.children:
-                logger.debug(child)
-                logger.debug(child.getId())
-                logger.debug(childId)
                 if child.getId() == childId:
                     return child
         return None

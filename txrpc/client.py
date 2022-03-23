@@ -59,7 +59,7 @@ class RPCClient(RPC):
 		:param service_path:  本节点服务地址
 		:return:
 		'''
-		
+		logger.debug("clientConnect ...")
 		if not service_path:
 			self.service_path = GlobalObject().config.get("DISTRIBUTED").get(self.name).get("APP")
 		else:
@@ -104,10 +104,15 @@ class RPCClient(RPC):
 		:param weight:  本节点权重
 		:return:
 		'''
+		
 		assert name != None, "local 名称不能为空"
+		logger.debug("名称检查通过 ...")
 		assert port != None, "port 不能为空"
+		logger.debug("port ...")
 		assert host != None, "host 不能为空"
+		logger.debug("host ...")
 		assert target_name != None, "target_name 不能为空"
+		logger.debug("target_name ...")
 		
 		remote = RemoteObject(name)
 		remote.setWeight(weight)

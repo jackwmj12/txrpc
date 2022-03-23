@@ -63,8 +63,7 @@ class RPCServer(RPC):
 		# 将服务添加到root
 		self.pbRoot.addServiceChannel(service)
 		
-		if self.service_path:
-			self.registerService(self.service_path)
+		self.registerService(self.service_path)
 	
 	def childConnectHandle(self, target):
 		"""

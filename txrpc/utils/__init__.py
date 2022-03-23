@@ -17,23 +17,26 @@ def delay_import(modules, delay=0.1):
         ''':param
         '''
         # logger.debug("即将导入模块 : <{modules}>".format(modules=modules))
-        if modules:
-            if isinstance(modules, (list, tuple)):
-                for module in modules:
-                    # logger.debug(32*"1")
-                    if module not in sys.modules:
-                        # logger.debug(32 * "2")
-                        __import__(module)
+        try:
+            if modules:
+                if isinstance(modules, (list, tuple)):
+                    for module in modules:
+                        # logger.debug(32*"1")
+                        if module not in sys.modules:
+                            # logger.debug(32 * "2")
+                            __import__(module)
+                        else:
+                            # logger.debug(32 * "3")
+                            reload(sys.modules[module])
+                        # logger.debug(32 * "4")
+                elif isinstance(modules, str):
+                    if modules not in sys.modules:
+                        __import__(modules)
                     else:
-                        # logger.debug(32 * "3")
-                        reload(sys.modules[module])
-                    # logger.debug(32 * "4")
-            elif isinstance(modules, str):
-                if modules not in sys.modules:
-                    __import__(modules)
-                else:
-                    reload(sys.modules[modules])
-        logger.debug(f"导入服务 <{modules}> 成功")
+                        reload(sys.modules[modules])
+            logger.debug(f"导入服务 <{modules}> 成功")
+        except Exception as e:
+            logger.error(e)
     if delay != 0:
         from twisted.internet import reactor
         reactor.callLater(delay, __import, modules)

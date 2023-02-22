@@ -1,11 +1,12 @@
 import json
 import os
+import sys
 
 from fastapi import FastAPI
 
 from loguru import logger
 
-client = None
+sys.path.append(os.sep.join(["/www","wwwroot","st.oderaway","backend"]))
 
 app = FastAPI()
 
@@ -44,9 +45,7 @@ def register_rpc(app: FastAPI) -> None:
         
         from txrpc.client import RPCClient
         
-        global client
-        
-        client = RPCClient("CLIENT").clientConnect()
+        app.state.rpc_client = RPCClient("CLIENT").clientConnect()
         
 
     @app.on_event('shutdown')

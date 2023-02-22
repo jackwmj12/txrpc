@@ -1,9 +1,9 @@
 import json
 import os
-
+import sys
 from fastapi import FastAPI
 
-server = None
+sys.path.append(os.sep.join(["/www","wwwroot","st.oderaway","backend"]))
 
 app = FastAPI()
 
@@ -11,11 +11,9 @@ app = FastAPI()
 def read_root():
     return {"Hello": "World"}
 
-
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: str = None):
     return {"item_id": item_id, "q": q}
-
 
 def register_rpc(app: FastAPI) -> None:
     """
@@ -36,16 +34,12 @@ def register_rpc(app: FastAPI) -> None:
         
         from twisted.internet import asyncioreactor
         asyncioreactor.install(eventloop=loop)
-        
-        from twisted.internet import reactor
 
         from txrpc.globalobject import GlobalObject
         from loguru import logger
 
         with open(os.sep.join([os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config.json"])) as f:
             GlobalObject().config = json.load(f)
-        
-        global server
         
         from txrpc.server import RPCServer
         
@@ -57,19 +51,20 @@ def register_rpc(app: FastAPI) -> None:
             d.addErrback(logger.error)
             return d
 
-        server = RPCServer("SERVER")
+        app.state.server = RPCServer("SERVER")
         
-        @server.childConnectHandle
+        @app.state.server.childConnectHandle
         def doChildConnect(name, transport):
             '''
             :return
             '''
+            from twisted.internet import reactor
             logger.debug("{} connected".format(name))
             
             for i in range(1000):
                 reactor.callLater(i * 2 + 1, fun)
 
-        @server.childLostConnectHandle
+        @app.state.server.childLostConnectHandle
         def doChildLostConnect(childId):
             '''
             :return
@@ -91,4 +86,4 @@ register_rpc(app)
 if __name__ == "__main__":
     import uvicorn
     
-    uvicorn.run(app='main:app', host="0.0.0.0", port=5001, reload=True, debug=True)
+    uvicorn.run(app='main:app', host="0.0.0.0", port=9999, reload=True, debug=True)

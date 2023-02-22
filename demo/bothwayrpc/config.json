@@ -1,0 +1,22 @@
+{
+  "DISTRIBUTED": {
+    "SERVER": {
+      "PORT" : 10000,
+      "APP" : "demo.bothwayrpc.app.serverapp"
+    },
+    "CLIENT_SERVER": {
+      "PORT" : 9000,
+      "APP" : "demo.bothwayrpc.app.serverapp"
+    },
+    "CLIENT": {
+      "NAME" : "CLIENT",
+      "REMOTE" : {
+        "NAME" :  "SERVER",
+        "HOST" : "127.0.0.1",
+        "PORT" : 10000
+      },
+      "APP" : "demo.bothwayrpc.app.clientapp",
+      "WEIGHT" : 10
+    }
+  }
+}

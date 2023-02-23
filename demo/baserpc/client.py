@@ -1,6 +1,6 @@
 import json
 import os
-
+import txrpc2
 from txrpc2.globalobject import GlobalObject
 from loguru import logger
 from txrpc2.client import RPCClient
@@ -16,4 +16,4 @@ app = RPCClient(name=NODE_NAME).clientConnect()
 def doWhenStart():
     logger.debug("i am starting")
 
-app.run()
+txrpc2.run()

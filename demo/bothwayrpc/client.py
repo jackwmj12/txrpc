@@ -28,5 +28,4 @@ def doChildLostConnect(childId):
 
 client = RPCClient("CLIENT").clientConnect()
 
-
 txrpc2.run()

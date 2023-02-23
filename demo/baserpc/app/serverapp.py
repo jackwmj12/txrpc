@@ -1,10 +1,10 @@
 from loguru import logger
 
-from txrpc2.globalobject import remoteserviceHandle, rootserviceHandle
+from txrpc2.globalobject import remoteServiceHandle, rootServiceHandle
 from txrpc2.server import RPCServer
 
 
-@rootserviceHandle
+@rootServiceHandle
 def server_test():
     d = RPCServer.callRemote("CLIENT","client_test")
     d.addCallback(logger.debug)

@@ -1,6 +1,6 @@
 
-from txrpc2.globalobject import remoteserviceHandle, rootserviceHandle
+from txrpc2.globalobject import remoteServiceHandle, rootServiceHandle
 
-@rootserviceHandle
+@rootServiceHandle
 def server_test():
     return "this is a response from server"

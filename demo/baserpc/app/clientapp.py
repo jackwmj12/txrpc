@@ -1,4 +1,4 @@
-from txrpc2.globalobject import remoteserviceHandle
+from txrpc2.globalobject import remoteServiceHandle
 from txrpc2.client import RPCClient
 from loguru import logger
 import os
@@ -9,7 +9,7 @@ def fun():
     d.addErrback(logger.error)
     return d
 
-@remoteserviceHandle("SERVER")
+@remoteServiceHandle("SERVER")
 def client_test():
     # from twisted.internet import reactor
     # reactor.callLater(1, fun)

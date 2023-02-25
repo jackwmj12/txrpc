@@ -1,7 +1,9 @@
-from txrpc2.globalobject import remoteServiceHandle, GlobalObject
+from txrpc2.globalobject import remoteServiceHandle, GlobalObject, connectRootHandle, lostConnectRootHandle
 from txrpc2.client import RPCClient
 from loguru import logger
 import os
+
+NODE_NAME = "CLIENT"
 
 def fun():
     d = GlobalObject().callRoot("SERVER", "server_test")
@@ -13,5 +15,5 @@ def fun():
 def client_test():
     # from twisted.internet import reactor
     # reactor.callLater(1, fun)
-    return f"\n{'*'*32}\nthis is a response from client<{os.getpid()}>\n{'*'*32}"
+    return f"this is a response from client<{os.getpid()}>"
     

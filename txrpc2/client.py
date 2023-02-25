@@ -45,8 +45,6 @@ class RPCClient(RPCBase):
 		:param name: 节点名称
 		'''
 		super(RPCClient, self).__init__()
-		self.connectService = Service("connect_service")  # rpc连接成功时运行
-		self.lostConnectService = Service("lost_connect_service")  # rpc连接断开时运行
 		self.name = name
 		GlobalObject().leafNodeMap[name] = self
 		
@@ -79,7 +77,7 @@ class RPCClient(RPCBase):
 		
 		logger.debug("local<{name}> -> remote:<{target_name}>".format(name=self.name, target_name=name))
 		
-		self._connectRemote(name=self.name, target_name=name, host=host, port=port, weight=weight)
+		self._connectRemote(name=self.name, remoteName=name, host=host, port=port, weight=weight)
 
 		return self
 	
@@ -95,7 +93,7 @@ class RPCClient(RPCBase):
 		'''
 		return GlobalObject().getRemoteObject(remoteName).callRemote(functionName, *args, **kwargs)
 
-	def _connectRemote(self, name: str, target_name: str, host: str, port: int, weight: int = 10):
+	def _connectRemote(self, name: str, remoteName: str, host: str, port: int, weight: int = 10):
 		'''
 			连接 远端 节点
 		:param name: 本节点名称
@@ -112,52 +110,16 @@ class RPCClient(RPCBase):
 		logger.debug("port ...")
 		assert host != None, "host 不能为空"
 		logger.debug("host ...")
-		assert target_name != None, "target_name 不能为空"
+		assert remoteName != None, "remoteName 不能为空"
 		logger.debug("target_name ...")
 		
 		# 创建远程调用对象
 		# 设置远程调用对象的权重
 		# 保存远程调用对象
 		remote = RemoteObject(name).setWeight(weight)
-		GlobalObject().remoteMap[target_name] = remote
+		GlobalObject().remoteMap[remoteName] = remote
 		
 		d = remote.connect((host, port))
-		d.addCallback(lambda ign : self._doWhenConnect())
+		d.addCallback(lambda ign: logger.debug(f"当前节点 : {name} 连接节点 : {remoteName} 成功 准备导入服务 : {self.servicePath}"))
 		d.addCallback(lambda ign : self.registerService(self.servicePath))
-	
-	def connectServiceHandle(self, target):
-		'''
-			注册连接成功时触发函数的handler
-		:param target: 函数
-		:return:
-		'''
-		self.connectService.mapFunction(target)
-	
-	def lostConnectServiceHandle(self, target):
-		'''
-			注册连接断开时触发函数的handler
-		:param target: 函数
-		:return:
-		'''
-		self.lostConnectService.mapFunction(target)
-	
-	def _doWhenConnect(self) -> defer.Deferred:
-		'''
-			连接成功时触发
-		:return:
-		'''
-		defer_list = []
-		for service in self.connectService:
-			defer_list.append(self.connectService.callFunction(service))
-		return defer.DeferredList(defer_list, consumeErrors=True)
-	
-	def _doWhenLostConnect(self) -> defer.Deferred:
-		'''
-			连接断开时触发
-		:return:
-		'''
-		defer_list = []
-		for service in self.lostConnectService:
-			defer_list.append(self.lostConnectService.callFunction(service))
-		return defer.DeferredList(defer_list, consumeErrors=True)
 		

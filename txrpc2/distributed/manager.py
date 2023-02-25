@@ -233,8 +233,9 @@ class NodeManager(object):
         '''
         nodeChild = self.getNodeChildById(childId=childId) # 根据ID获取子节点
         if not nodeChild:
-            logger.error("child %s doesn't exists" % childId)
-            return
+            # logger.error("child %s doesn't exists" % childId)
+            # return
+            raise RemoteUnFindedError()
         return nodeChild.callbackNodeChild(*args,**kw) # 调用子节点
     
     def callNodeChildByName(self,name,*args,**kw):
@@ -245,7 +246,8 @@ class NodeManager(object):
 
         nodeChild = self.getNodeChildByName(name) # 获取子节点
         if not nodeChild:
-            logger.error("NodeChild %s doesn't exists" % name)
-            return
+            # logger.error("NodeChild %s doesn't exists" % name)
+            # return
+            raise RemoteUnFindedError()
         return nodeChild.callbackNodeChild(*args,**kw) # 调用子节点
         

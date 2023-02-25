@@ -45,22 +45,7 @@ class RPCBase():
 			:return
 		'''
 		self.servicePath : Union[List[str],None] = None # 服务的py文件路径
-		self.startService = Service("startservice") # 程序开始时运行
-		self.stopService = Service("endservice")    # 程序结束时运行(暂无实现)
-		self.reloadService = Service("reloadservice") # 程序重载时运行
-	
-	def run(self):
-		'''
-			:return
-		'''
-		from twisted.internet import reactor
-		reactor.callWhenRunning(self._doWhenStart) # 注册开始运行函数
-		reactor.run()
-	
-	def install(self):
-		'''
-			:param
-		'''
+
 		from twisted.internet import reactor
 		reactor.callWhenRunning(self._doWhenStart) # 注册开始运行函数
 	
@@ -82,65 +67,42 @@ class RPCBase():
 		from twisted.internet import reactor
 		reactor.suggestThreadPoolSize(GlobalObject().config.get("TWISTED_THREAD_POOL", 8))  # 设置线程池数量
 		logger.info("设置线程池数量为：{}".format(GlobalObject().config.get("TWISTED_THREAD_POOL", 8)))
-
-	def startServiceHandle(self, target):
-		"""
-			注册程序停止触发函数的handler
-		:param target: 函数
-		:return:
-		"""
-		self.startService.mapFunction(target)
-	
-	def stopServiceHandle(self, target):
-		"""
-			注册程序停止触发函数的handler
-		:param target: 函数
-		:return:
-		"""
-		self.stopService.mapFunction(target)
-	
-	def reloadServiceHandle(self, target):
-		"""
-			注册程序重载触发函数的handler
-		:param target: 函数
-		:return:
-		"""
-		self.reloadService.mapFunction(target)
 	
 	def _doWhenStart(self) -> defer.Deferred:
 		'''
 			程序开始时,将会运行该函数
 		:return:
 		'''
-		defer_list = []
-		for service in self.startService:
-			defer_list.append(
-				self.startService.callFunction(service)
+		deferList = []
+		for service in GlobalObject().startService:
+			deferList.append(
+				GlobalObject().startService.callFunction(service)
 			)
-		return defer.DeferredList(defer_list,consumeErrors=True)
+		return defer.DeferredList(deferList,consumeErrors=True)
 	
 	def _doWhenStop(self) -> defer.Deferred:
 		'''
 			程序停止时,将会运行该服务
 		:return:
 		'''
-		defer_list = []
-		for service in self.stopService:
-			defer_list.append(
-				self.stopService.callFunction(service)
+		deferList = []
+		for service in GlobalObject().stopService:
+			deferList.append(
+				GlobalObject().stopService.callFunction(service)
 			)
-		return defer.DeferredList(defer_list, consumeErrors=True)
+		return defer.DeferredList(deferList, consumeErrors=True)
 	
 	def _doWhenReload(self) -> defer.Deferred:
 		'''
 			程序重载时,将会运行该服务
 		:return:
 		'''
+		# 重载服务
 		self.registerService(self.servicePath)
-		defer_list = []
-		for service in self.reloadService:
-			defer_list.append(
-				self.reloadService.callFunction(service)
+		deferList = []
+		for service in GlobalObject().reloadService:
+			deferList.append(
+				GlobalObject().reloadService.callFunction(service)
 			)
-		return defer.DeferredList(defer_list, consumeErrors=True)
+		return defer.DeferredList(deferList, consumeErrors=True)
 	

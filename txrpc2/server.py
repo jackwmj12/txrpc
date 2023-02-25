@@ -64,22 +64,6 @@ class RPCServer(RPCBase):
 
 	def getName(self):
 		return self.name
-
-	def leafConnectHandle(self, target):
-		"""
-			被该装饰器装饰的函数,会在leaf节点和root节点连接建立时触发
-		:param target: 函数
-		:return:
-		"""
-		self.pbRoot.leafConnectService.mapFunction(target)
-	
-	def leafLostConnectHandle(self, target):
-		"""
-			被该装饰器装饰的函数,会在leaf节点和root节点连接断开时触发
-		:param target: 函数
-		:return:
-		"""
-		self.pbRoot.leafLostConnectService.mapFunction(target)
 	
 	@staticmethod
 	def callRemote(remoteName: str, functionName: str, *args, **kwargs):

@@ -26,16 +26,29 @@ from twisted.internet import defer
 from typing import Dict, Union
 
 from txrpc2.distributed.reference import ProxyReference
+from txrpc2.globalobject import GlobalObject
 from txrpc2.service.service import CommandService
 from loguru import logger
 
 class RpcClientFactory(pb.PBClientFactory):
-    
+
+    def __init__(self, name: str):
+        super().__init__()
+        self.name = name
+
     def clientConnectionLost(self, connector, reason, reconnecting=0):
         super().clientConnectionLost(connector, reason, reconnecting)
+        deferList = []
+        for service in GlobalObject().lostConnectRootMap.get(self.name, None):
+            deferList.append(GlobalObject().lostConnectRootMap.get(self.name).callFunction(service))
+        return defer.DeferredList(deferList, consumeErrors=True)
     
     def clientConnectionMade(self, broker):
         super().clientConnectionMade(broker)
+        deferList = []
+        for service in GlobalObject().connectRootMap.get(self.name, None):
+            deferList.append(GlobalObject().connectRootMap.get(self.name).callFunction(service))
+        return defer.DeferredList(deferList, consumeErrors=True)
 
 class RemoteObject(object):
     '''远程调用对象'''
@@ -48,16 +61,20 @@ class RemoteObject(object):
         self._id = ""
         self._name = name
         self._weight: int = 10
-        self._factory = pb.PBClientFactory() # pb的客户端，客户端可以执行server端的remote方法
+        self._factory = RpcClientFactory(name) # pb的客户端，客户端可以执行server端的remote方法
         self._reference = ProxyReference()  # 创建代理通道，该通道包含添加服务，代理发送数据功能
         self._addr: Union[str,None] = None
-        self._config: Dict = {}
-        self.connectedService = CommandService("connected_service")
+        # self._config: Dict = {}
+        # self.connectedService = CommandService("connected_service")
 
     def __str__(self):
+        if  not self._id :
+            return self._name
         return ":".join([self._name, self._id])
 
     def __repr__(self):
+        if  not self._id :
+            return self._name
         return ":".join([self._name,self._id])
 
     def getName(self):
@@ -95,21 +112,22 @@ class RemoteObject(object):
         self._weight = weight
         return self
 
-    def setConfig(self, **kwargs) -> "RemoteObject":
-        self._config = kwargs
-        return self
+    # def setConfig(self, **kwargs) -> "RemoteObject":
+    #     self._config = kwargs
+    #     return self
 
-    def getConfig(self) -> Dict:
-        return self._config
+    # def getConfig(self) -> Dict:
+    #     return self._config
 
     def connect(self,addr) -> defer.Deferred:
         '''
-            初始化并连接 server 节点
+            初始化 并连接 root 节点
         '''
         from twisted.internet import reactor
         
         self._addr = addr
         reactor.connectTCP(addr[0], addr[1], self._factory)
+        # 将 远程函数 代理给 ROOT 节点
         return self.takeProxy()
         
     def reconnect(self):
@@ -129,7 +147,7 @@ class RemoteObject(object):
             向远程服务端发送代理通道对象
         '''
         deferedRemote = self._factory.getRootObject()
-        return deferedRemote.addCallback(_callRemote,'takeProxy',self._name,self._weight,self._reference).addCallback(self.doWhenConnect)
+        return deferedRemote.addCallback(_callRemote,'takeProxy',self._name,self._weight,self._reference)
     
     def callRemote(self,commandId,*args,**kw):
         '''
@@ -139,20 +157,20 @@ class RemoteObject(object):
         deferedRemote = self._factory.getRootObject()
         return deferedRemote.addCallback(_callRemote,'callFunction',commandId,*args,**kw)
     
-    def doWhenConnect(self,ign=None):
-        '''
-            连接成功后触发
-            :param
-        '''
-        self._doWhenConnect()
-        
-    def _doWhenConnect(self):
-        '''
-            连接成功后触发
-        :param
-        '''
-        for service in self.connectedService:
-            self.connectedService.callFunction(service)
+    # def doWhenConnect(self,ign=None):
+    #     '''
+    #         连接成功后触发
+    #         :param
+    #     '''
+    #     self._doWhenConnect()
+    #
+    # def _doWhenConnect(self):
+    #     '''
+    #         连接成功后触发
+    #     :param
+    #     '''
+    #     for service in self.connectedService:
+    #         self.connectedService.callFunction(service)
         
 def _callRemote(obj:RemoteObject,funcName:str,*args,**kw):
     '''

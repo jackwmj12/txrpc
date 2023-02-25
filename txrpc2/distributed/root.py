@@ -25,6 +25,7 @@ from twisted.internet.defer import Deferred
 from twisted.spread import pb
 from txrpc2.distributed.nodechild import NodeChild
 from txrpc2.distributed.manager import NodeManager
+from txrpc2.globalobject import GlobalObject
 from txrpc2.service.service import CommandService, Service
 from loguru import logger
 
@@ -50,8 +51,6 @@ class PBRoot(pb.Root):
         '''
         self.dnsmanager: NodeManager = dnsmanager
         self.rootService: Service = None
-        self.leafConnectService = Service("child_connect_service")
-        self.leafLostConnectService = Service("child_lost_connect_service")
         
     def addRootServiceChannel(self,service : Service):
         '''
@@ -67,17 +66,17 @@ class PBRoot(pb.Root):
         :param transport:  子节点句柄
         :return:
         """
-        defer_list = []
+        deferList = []
         try:
             logger.debug("node [%s] connect" % name)
-            for service in self.leafConnectService:
+            for service in GlobalObject().leafConnectService:
                 # 遍历注册的 子节点连接服务(函数)并调用
-                defer_list.append(
-                    self.leafConnectService.callFunction(service,name,transport)
+                deferList.append(
+                    GlobalObject().leafConnectService.callFunction(service,name,transport)
                 )
         except Exception as e:
             logger.error(str(e))
-        return defer.DeferredList(defer_list,consumeErrors=True)
+        return defer.DeferredList(deferList,consumeErrors=True)
             
     def doChildLostConnect(self,childId) -> Deferred:
         """
@@ -85,15 +84,15 @@ class PBRoot(pb.Root):
         :param childId:  子节点ID
         :return:
         """
-        defer_list = []
+        deferList = []
         try:
             logger.debug("node [%s] lose" % childId)
-            for service in self.leafLostConnectService:
+            for service in GlobalObject().leafLostConnectService:
                 # 遍历注册的 子节点断开连接服务(函数)并调用
-                defer_list.append(self.leafLostConnectService.callFunction(service,childId))
+                deferList.append(GlobalObject().leafLostConnectService.callFunction(service,childId))
         except Exception as e:
             logger.error(str(e))
-        return defer.DeferredList(defer_list, consumeErrors=True)
+        return defer.DeferredList(deferList, consumeErrors=True)
 
     def dropLeaf(self,*args,**kw):
         '''

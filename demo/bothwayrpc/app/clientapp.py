@@ -1,11 +1,10 @@
 
 
-from txrpc2.globalobject import remoteServiceHandle
-from txrpc2.client import RPCClient
+from txrpc2.globalobject import remoteServiceHandle, GlobalObject
 from loguru import logger
 
 def fun():
-    d = RPCClient.callRemote("SERVER", "server_test")
+    d = GlobalObject().callRoot("SERVER", "server_test")
     d.addCallback(logger.debug)
     d.addErrback(logger.error)
     return d

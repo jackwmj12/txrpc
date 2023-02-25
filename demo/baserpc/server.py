@@ -10,7 +10,7 @@ with open(os.sep.join([os.path.dirname(os.path.abspath(__file__)),"config.json"]
     GlobalObject().config = json.load(f)
 
 def fun():
-    d = RPCServer.callRemote("CLIENT", "client_test")
+    d = GlobalObject().callLeaf("CLIENT", "client_test")
     if not d:
         return None
     d.addCallback(logger.debug)

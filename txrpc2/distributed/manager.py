@@ -18,14 +18,14 @@ Created on 2019-11-22
                 ┗┻┛　┗┻┛
                  神兽保佑，代码无BUG!
  @desc：
-                  | - Node       |-- ChildNode
-    NodeManager - - - Node - - - - - ChildNode
-                  | - Node       |-- ChildNode
+                  | - Node       |-- NodeChild
+    NodeManager - - - Node - - - - - NodeChild
+                  | - Node       |-- NodeChild
 '''
 import random
 from typing import Dict, List, Union
 from zope.interface import Interface, implementer
-from txrpc2.distributed.child import ChildNode
+from txrpc2.distributed.nodechild import NodeChild
 from loguru import logger
 
 class RemoteUnFindedError(Exception):
@@ -40,8 +40,8 @@ class Node():
             初始化子节点对象
         '''
         self.name = name
-        self.hand : List[int] = []
-        self.children : List[ChildNode] = []
+        self.hand : List[NodeChild] = []
+        self.children : List[NodeChild] = []
         self.handCur : int = 0
     
     def __str__(self):
@@ -50,7 +50,7 @@ class Node():
     def __repr__(self):
         return f" Children : {self.name}"
     
-    def append(self,child : ChildNode):
+    def append(self,child : NodeChild):
         '''
             :param
         '''
@@ -60,11 +60,11 @@ class Node():
             hand = [child for _ in range(child.getWeight())]
             self.hand.extend(hand)
             random.shuffle(self.hand)  # 洗牌
-            logger.debug(f"append success , \nnodes {self.children}\nhand : {self.hand}")
+            logger.debug(f"node <{self.name}> append Nodechild <{self.children}> success ")
         else:
             logger.error("append failed , node %s is already exist" % child.getName())
     
-    def remove(self,child : ChildNode):
+    def remove(self,child : NodeChild):
         '''
             :param
         '''
@@ -73,7 +73,7 @@ class Node():
             self.handCur = 0
             self.hand = [item for item in self.hand if item != child] #
             random.shuffle(self.hand)  # 洗牌
-            logger.debug(f"remove success , \nnodes {self.children}\nhand : {self.hand}")
+            logger.debug(f"node <{self.name}> remove Nodechild <{self.children}> success ")
         else:
             logger.error("remove failed , node %s is not exist" % child.getName())
     
@@ -85,15 +85,15 @@ class Node():
         random.shuffle(self.hand)
         self.handCur = 0
     
-    def getChild(self):
+    def getChild(self) -> Union[NodeChild,None]:
         '''
             获取子节点
         :return:
         '''
+
         if self.children and self.hand:
             if self.handCur >= len(self.hand) :
                 self.handCur = 0
-            # logger.debug(self.hand[self.handCur])
             child = self.hand[self.handCur]
             self.handCur += 1
             return child
@@ -105,29 +105,29 @@ class _NodeManager(Interface):
     def __init__(self):
         '''初始化接口'''
         
-    def getChildById(self,childId):
+    def getNodeChildById(self,childId):
         '''根据节点id获取节点实例'''
         
-    def getChildByName(self,childname):
+    def getNodeChildByName(self,childname):
         '''根据节点的名称获取节点实例'''
         
-    def addChild(self,child):
+    def addNodeChild(self,child):
         '''添加一个child节点
         @param child: Child object
         '''
     
-    def dropChild(self,*arg,**kw):
+    def dropNodeChild(self,*arg,**kw):
         '''删除一个节点'''
         
-    def callChildByID(self,*args,**kw):
+    def callNodeChildByID(self,*args,**kw):
         '''调用子节点的接口'''
         
-    def callChildByName(self,*args,**kw):
+    def callNodeChildByName(self,*args,**kw):
         '''调用子节点的接口
         @param childname: str 子节点的名称
         '''
     
-    def dropChildByID(self,childId):
+    def dropNodeChildByID(self,childId):
         '''删除一个child 节点
         @param childId: Child ID
         '''
@@ -151,45 +151,45 @@ class NodeManager(object):
         '''
             :param
         '''
-        node : Node = self._nodes.get(name)
+        node: Node = self._nodes.get(name)
         if node :
             return node
         return None
     
-    def getChildById(self,childId) -> Union[None,ChildNode]:
+    def getNodeChildById(self,childId) -> Union[None,NodeChild]:
         '''
             根据节点的ID获取节点实例
         '''
         for node in self._nodes.values():
-            for childNode in node.children:
-                if childNode.getId() == childId:
-                    return childNode
+            for nodeChild in node.children:
+                if nodeChild.getId() == childId:
+                    return nodeChild
         return None
         
-    def getChildByName(self,name) -> Union[None,ChildNode]:
+    def getNodeChildByName(self,name) -> Union[None,NodeChild]:
         '''
             根据节点的名称获取节点实例
         '''
         if name:
-            node : Node = self._nodes.get(name)
-            logger.debug(f"node 获取成功 {node}")
+            node: Node = self._nodes.get(name)
+            logger.debug(f"NODE 获取成功 {node}")
             if node:
                 return node.getChild()
         return None
         
-    def addChild(self,childNode: ChildNode):
+    def addNodeChild(self,nodeChild: NodeChild):
         '''
             添加一个child节点
             @param child: Child object
         '''
-        name = childNode.getName()
+        name = nodeChild.getName()
         # logger.info("node %s is connecting"%name)
         node : Node = self._nodes.get(name)
         if node:
-            node.append(childNode)
+            node.append(nodeChild)
         else:
             self._nodes[name] = Node(name)
-            self._nodes[name].append(childNode)
+            self._nodes[name].append(nodeChild)
         # logger.info("node %s is connected" % name)
         
     def handShuffle(self,name):
@@ -202,50 +202,50 @@ class NodeManager(object):
         else:
             logger.error("child nodes %s is not exist" % name)
         
-    def dropChild(self,childNode: ChildNode):
+    def dropNodeChild(self,nodeChild: NodeChild):
         '''
-        删除一个childNode 节点
-        @param childNode: Child Object
+        删除一个 nodeChild 节点
+        @param nodeChild :
         '''
-        node : Node = self._nodes.get(childNode.getName())
+        node: Node = self._nodes.get(nodeChild.getName())
         if node:
-            node.remove(childNode)
+            node.remove(nodeChild)
         else:
-            logger.error("nodes %s is not exist " % childNode.getName())
+            logger.error("nodes %s is not exist " % nodeChild.getName())
             
-    def dropChildById(self,childId : int) -> bool:
+    def dropNodeChildById(self,childId : int) -> bool:
         '''
         删除一个child 节点
         @param childId: Child ID 
         '''
-        childNode : ChildNode = self.getChildById(childId)
-        if childNode:
-            self.dropChild(childNode)
+        nodeChild: NodeChild = self.getNodeChildById(childId)
+        if nodeChild:
+            self.dropNodeChild(nodeChild)
             return True
         else:
             logger.error("node[%s] is not exist" % childId)
         return False
             
-    def callChildByID(self,childId,*args,**kw):
+    def callNodeChildByID(self,childId,*args,**kw):
         '''
             调用子节点的接口
             @param childId: int 子节点的id
         '''
-        childNode = self.getChildById(childId=childId) # 根据ID获取子节点
-        if not childNode:
+        nodeChild = self.getNodeChildById(childId=childId) # 根据ID获取子节点
+        if not nodeChild:
             logger.error("child %s doesn't exists" % childId)
             return
-        return childNode.callbackChild(*args,**kw) # 调用子节点
+        return nodeChild.callbackNodeChild(*args,**kw) # 调用子节点
     
-    def callChildByName(self,name,*args,**kw):
+    def callNodeChildByName(self,name,*args,**kw):
         '''
             调用子节点的接口
             @param name: str 子节点的名称
         '''
 
-        childNode = self.getChildByName(name) # 获取子节点
-        if not childNode:
-            logger.error("childNode %s doesn't exists" % name)
+        nodeChild = self.getNodeChildByName(name) # 获取子节点
+        if not nodeChild:
+            logger.error("NodeChild %s doesn't exists" % name)
             return
-        return childNode.callbackChild(*args,**kw) # 调用子节点
+        return nodeChild.callbackNodeChild(*args,**kw) # 调用子节点
         

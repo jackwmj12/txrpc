@@ -44,7 +44,7 @@ def register_rpc(app: FastAPI) -> None:
         from txrpc2.server import RPCServer
         
         def fun():
-            d = RPCServer.callRemote("CLIENT", "client_test")
+            d = GlobalObject().callLeaf("CLIENT", "client_test")
             if not d:
                 return None
             d.addCallback(logger.debug)

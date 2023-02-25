@@ -43,24 +43,28 @@ class RPCServer(RPCBase):
 		:param port: 服务端port
 		'''
 		# root对象监听制定端口
-		GlobalObject().root = self
 		super(RPCServer,self).__init__()
-		self.name = name
 		if not service_path:
 			self.service_path = GlobalObject().config.get("DISTRIBUTED").get(name).get("APP")
 		
 		if not port:
 			port = int(GlobalObject().config.get("DISTRIBUTED").get(name).get("PORT"))
-		
+
 		self.pbRoot = PBRoot()
 		from twisted.internet import reactor
 		reactor.listenTCP(port, BilateralFactory(self.pbRoot))
-		service = Service(name=name)
-		# 将服务添加到root
-		self.pbRoot.addServiceChannel(service)
+		# service = Service(name = name)
+		# # 将服务添加到root
+		# self.pbRoot.addRootServiceChannel(service)
 		# 注册服务
 		self.registerService(self.service_path)
-	
+		# 配置到全局内容中
+		self.name = name
+		GlobalObject().root = self
+
+	def getName(self):
+		return self.name
+
 	def leafConnectHandle(self, target):
 		"""
 			被该装饰器装饰的函数,会在leaf节点和root节点连接建立时触发
@@ -87,7 +91,7 @@ class RPCServer(RPCBase):
 		:param kwargs:  参数
 		:return:
 		'''
-		return GlobalObject().getRoot().pbRoot.callChildByName(remoteName, functionName, *args, **kwargs)
+		return GlobalObject().callLeaf(remoteName, functionName, *args, **kwargs)
 
 	@staticmethod
 	def callRemoteByID(remoteID: str, functionName: str, *args, **kwargs):
@@ -99,4 +103,4 @@ class RPCServer(RPCBase):
         :param kwargs:  参数
         :return:
         '''
-		return GlobalObject().getRoot().pbRoot.callChildByID(remoteID, functionName, *args, **kwargs)
+		return GlobalObject().callLeafByID(remoteID, functionName, *args, **kwargs)

@@ -13,11 +13,16 @@ with open(os.sep.join([os.path.dirname(os.path.abspath(__file__)),"config.json"]
     GlobalObject().config = json.load(f)
 
 def fun():
-    d = RPCServer.callRemote("CLIENT", "client_test")
+    d = GlobalObject().callLeaf("CLIENT", "client_test")
     if not d:
         return None
     d.addCallback(logger.debug)
     d.addErrback(logger.error)
+    d.addCallback(
+        lambda ign : {
+
+        }
+    )
     return d
 
 server = RPCServer("SERVER")
@@ -30,9 +35,8 @@ def doLeafConnect(name, transport):
     from twisted.internet import reactor
     
     logger.debug("{} connected".format(name))
-    
-    for i in range(1000):
-        reactor.callLater(i * 2 + 1, fun)
+
+    reactor.callLater(1, fun)
 
 @server.leafLostConnectHandle
 def doChildLostConnect(childId):

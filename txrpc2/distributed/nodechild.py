@@ -20,7 +20,7 @@ Created on 2019-11-22
     子节点
 '''
 
-class ChildNode(object):
+class NodeChild(object):
 	'''
     子节点对象
     '''
@@ -35,10 +35,10 @@ class ChildNode(object):
 		self._transport = None
 	
 	def __str__(self):
-		return f" ChildNode<{self._name}:{self._id}>"
+		return f" NodeChild<{self._name}:{self._id}>"
 	
 	def __repr__(self):
-		return f" ChildNode<{self._name}:{self._id}>"
+		return f" NodeChild<{self._name}:{self._id}>"
 	
 	def setId(self,id):
 		self._id = id
@@ -79,7 +79,7 @@ class ChildNode(object):
         '''
 		self._transport = transport
 
-	def callbackChild(self, *args, **kw):
+	def callbackNodeChild(self, *args, **kw):
 		'''
             root节点调用子节点的接口
             return a Defered Object (recvdata)

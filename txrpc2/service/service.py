@@ -86,7 +86,7 @@ class Service(object):
             if key in self._functions.keys():
                 exist_target = self._functions.get(key)
                 logger.warning("function [%s] Already exists, [%s] will be covered by [%s]" % (key, exist_target.__class__.__name__, f.__class__.__name__))
-            logger.debug(f"Service:<{self._name}> {key} 注册成功")
+            logger.debug(f"Service : <{self._name}> {key} 注册成功")
             self._functions[key] = f
         finally:
             self._lock.release()

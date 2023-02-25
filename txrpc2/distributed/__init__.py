@@ -23,8 +23,8 @@ Created on 2019-11-22
                   |
         root -- node(leaf) -- leaf2
         
-        root call node -> callChildByName("leaf",...)
-        root call leaf1 -> callChildByID("leaf1",...)
+        root call node -> callNodeChildByName("leaf",...)
+        root call leaf1 -> callNodeChildByID("leaf1",...)
 '''
 
 # 导入master服务，该服务主要提供

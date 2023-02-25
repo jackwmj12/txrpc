@@ -3,7 +3,7 @@
 # @Author   : joe lin
 # @FILE     : __init__.py
 # @Time     : 2021-02-20 21:37
-# @Software : txrpc
+# @Software : txrpc2
 # @Email    : jackwmj12@163.com
 # @Github   : 
 # @Desc     : 

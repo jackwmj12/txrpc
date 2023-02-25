@@ -23,6 +23,8 @@ Created on 2019-11-22
 
 from twisted.spread import pb
 from twisted.internet import defer
+from typing import Dict, Union
+
 from txrpc2.distributed.reference import ProxyReference
 from txrpc2.service.service import CommandService
 from loguru import logger
@@ -43,22 +45,40 @@ class RemoteObject(object):
         @param port: int 远程分布服的端口号
         @param rootaddr: 根节点服务器地址
         '''
+        self._id = ""
         self._name = name
-        self._weight = 10
+        self._weight: int = 10
         self._factory = pb.PBClientFactory() # pb的客户端，客户端可以执行server端的remote方法
         self._reference = ProxyReference()  # 创建代理通道，该通道包含添加服务，代理发送数据功能
-        self._addr = None
-        
+        self._addr: Union[str,None] = None
+        self._config: Dict = {}
         self.connectedService = CommandService("connected_service")
-    
-    def setName(self,name):
-        '''设置节点的名称'''
-        self._name = name
-        
+
+    def __str__(self):
+        return ":".join([self._name, self._id])
+
+    def __repr__(self):
+        return ":".join([self._name,self._id])
+
     def getName(self):
         '''获取节点的名称'''
         return self._name
-        
+
+    def setName(self,name: str) -> "RemoteObject":
+        '''设置节点的名称'''
+        self._name = name
+        return self
+
+    def setID(self, id: str) -> "RemoteObject":
+        self._id = id
+        return self
+
+    def getID(self):
+        return self._id
+
+    def getRemoteName(self):
+        return ":".join([self._name,self._id])
+
     def getWeight(self):
         '''
             获取节点权重
@@ -66,14 +86,22 @@ class RemoteObject(object):
         '''
         return self._weight
     
-    def setWeight(self,weight):
+    def setWeight(self,weight) -> "RemoteObject":
         '''
             设置节点权重
         :param weight:
         :return:
         '''
         self._weight = weight
-        
+        return self
+
+    def setConfig(self, **kwargs) -> "RemoteObject":
+        self._config = kwargs
+        return self
+
+    def getConfig(self) -> Dict:
+        return self._config
+
     def connect(self,addr) -> defer.Deferred:
         '''
             初始化并连接 server 节点

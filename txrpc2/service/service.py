@@ -53,10 +53,10 @@ class Service(object):
         self._name = name
         self.unDisplay: Set[str] = set()
         self._lock: threading.RLock = threading.RLock()
-        self._functions: Dict[Callable] = {} # Keeps track of targets internally
+        self._functions: Dict[str,Callable] = {} # Keeps track of targets internally
 
     def __iter__(self):
-        return iter(self._functions.keys())
+        return self._functions.__iter__()
 
     def setName(self,name: str):
         '''

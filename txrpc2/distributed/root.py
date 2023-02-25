@@ -50,8 +50,8 @@ class PBRoot(pb.Root):
         '''
         self.dnsmanager: NodeManager = dnsmanager
         self.service: Service
-        self.childConnectService = Service("child_connect_service")
-        self.childLostConnectService = Service("child_lost_connect_service")
+        self.leafConnectService = Service("child_connect_service")
+        self.leafLostConnectService = Service("child_lost_connect_service")
         
     def addServiceChannel(self,service : Service):
         '''
@@ -60,7 +60,7 @@ class PBRoot(pb.Root):
         '''
         self.service: Service = service
 
-    def doChildConnect(self,name,transport) -> Deferred:
+    def doLeafConnect(self,name,transport) -> Deferred:
         """
             当node节点连接时的处理
         :param name: 子节点名称
@@ -70,10 +70,10 @@ class PBRoot(pb.Root):
         defer_list = []
         try:
             logger.debug("node [%s] connect" % name)
-            for service in self.childConnectService:
+            for service in self.leafConnectService:
                 # 遍历注册的 子节点连接服务(函数)并调用
                 defer_list.append(
-                    self.childConnectService.callFunction(service,name,transport)
+                    self.leafConnectService.callFunction(service,name,transport)
                 )
         except Exception as e:
             logger.error(str(e))
@@ -88,9 +88,9 @@ class PBRoot(pb.Root):
         defer_list = []
         try:
             logger.debug("node [%s] lose" % childId)
-            for service in self.childLostConnectService:
+            for service in self.leafLostConnectService:
                 # 遍历注册的 子节点断开连接服务(函数)并调用
-                defer_list.append(self.childLostConnectService.callFunction(service,childId))
+                defer_list.append(self.leafLostConnectService.callFunction(service,childId))
         except Exception as e:
             logger.error(str(e))
         return defer.DeferredList(defer_list, consumeErrors=True)
@@ -119,13 +119,13 @@ class PBRoot(pb.Root):
         '''
         return self.dnsmanager.callChildByName(childname,*args,**kw)
     
-    def callChildById(self,childId,*args,**kw)->Deferred:
+    def callChildByID(self,childId,*args,**kw)->Deferred:
         '''
             通过子节点的唯一ID调用子节点的接口
         @param childId: int 子节点的id
         return Defered Object
         '''
-        return self.dnsmanager.callChildById(childId,*args,**kw)
+        return self.dnsmanager.callChildByID(childId,*args,**kw)
     
     def remote_takeProxy(self,name,weight,transport):
         '''
@@ -139,7 +139,7 @@ class PBRoot(pb.Root):
         child.setWeight(weight)
         child.setTransport(transport)
         self.dnsmanager.addChild(child)
-        return self.doChildConnect(name,transport)
+        return self.doLeafConnect(name,transport)
         
     def remote_callFunction(self, command, *args, **kw):
         '''

@@ -22,8 +22,8 @@ def fun():
 
 server = RPCServer("SERVER")
 
-@server.childConnectHandle
-def doChildConnect(name, transport):
+@server.leafConnectHandle
+def doLeafConnect(name, transport):
     '''
     :return
     '''
@@ -34,7 +34,7 @@ def doChildConnect(name, transport):
     for i in range(1000):
         reactor.callLater(i * 2 + 1, fun)
 
-@server.childLostConnectHandle
+@server.leafLostConnectHandle
 def doChildLostConnect(childId):
     '''
     :return

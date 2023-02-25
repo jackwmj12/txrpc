@@ -3,7 +3,7 @@
 # @Author   : joe lin
 # @FILE     : server.py
 # @Time     : 2021-02-20 21:16
-# @Software : txrpc
+# @Software : txrpc2
 # @Email    : jackwmj12@163.com
 # @Github   : 
 # @Desc     : 
@@ -61,21 +61,21 @@ class RPCServer(RPCBase):
 		# 注册服务
 		self.registerService(self.service_path)
 	
-	def childConnectHandle(self, target):
+	def leafConnectHandle(self, target):
 		"""
 			被该装饰器装饰的函数,会在leaf节点和root节点连接建立时触发
 		:param target: 函数
 		:return:
 		"""
-		self.pbRoot.childConnectService.mapFunction(target)
+		self.pbRoot.leafConnectService.mapFunction(target)
 	
-	def childLostConnectHandle(self, target):
+	def leafLostConnectHandle(self, target):
 		"""
 			被该装饰器装饰的函数,会在leaf节点和root节点连接断开时触发
 		:param target: 函数
 		:return:
 		"""
-		self.pbRoot.childLostConnectService.mapFunction(target)
+		self.pbRoot.leafLostConnectService.mapFunction(target)
 	
 	@staticmethod
 	def callRemote(remoteName: str, functionName: str, *args, **kwargs):
@@ -87,4 +87,16 @@ class RPCServer(RPCBase):
 		:param kwargs:  参数
 		:return:
 		'''
-		return GlobalObject().getLocalRoot().pbRoot.callChildByName(remoteName, functionName, *args, **kwargs)
+		return GlobalObject().getRoot().pbRoot.callChildByName(remoteName, functionName, *args, **kwargs)
+
+	@staticmethod
+	def callRemoteByID(remoteID: str, functionName: str, *args, **kwargs):
+		'''
+            调用子节点挂载的函数
+        :param remoteID:  远程分支节点ID
+        :param functionName: 方法名称
+        :param args:  参数
+        :param kwargs:  参数
+        :return:
+        '''
+		return GlobalObject().getRoot().pbRoot.callChildByID(remoteID, functionName, *args, **kwargs)

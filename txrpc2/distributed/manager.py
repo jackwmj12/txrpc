@@ -119,7 +119,7 @@ class _NodeManager(Interface):
     def dropChild(self,*arg,**kw):
         '''删除一个节点'''
         
-    def callChildById(self,*args,**kw):
+    def callChildByID(self,*args,**kw):
         '''调用子节点的接口'''
         
     def callChildByName(self,*args,**kw):
@@ -226,7 +226,7 @@ class NodeManager(object):
             logger.error("node[%s] is not exist" % childId)
         return False
             
-    def callChildById(self,childId,*args,**kw):
+    def callChildByID(self,childId,*args,**kw):
         '''
             调用子节点的接口
             @param childId: int 子节点的id

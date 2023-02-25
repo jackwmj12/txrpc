@@ -63,8 +63,8 @@ def fun_():
 
 server = RPCServer("SERVER")
 
-@server.childConnectHandle
-def doChildConnect(name, transport):
+@server.leafConnectHandle
+def doLeafConnect(name, transport):
     '''
     :return
     '''
@@ -72,7 +72,7 @@ def doChildConnect(name, transport):
     logger.debug("{} connected".format(name))
     reactor.callLater(1, fun_)
 
-@server.childLostConnectHandle
+@server.leafLostConnectHandle
 def doChildLostConnect(childId):
     '''
     :return

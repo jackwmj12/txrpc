@@ -39,22 +39,13 @@ class GlobalObject(metaclass=Singleton):
                 LEAF 节点会提供 LEAF 节点装饰过的remote方法给 ROOT 节点调用
         '''
         self.config = {}  # 配置信息
-        self.remoteRoots: Dict[str: RemoteObject] = {} # 远程 RPC 根节点
+        self.remoteMap: Dict[str, RemoteObject] = {} # 远程 RPC 节点信息
+        # self.remoteRoots: Dict[str: RemoteObject] = {} # 远程 RPC 根节点
+        self.masterRoot: RemoteObject = None # 远程 MASTER RPC 节点
         self.root = None # type: RPCServer
-        self.leafs = {} # type: Dict[str,RPCClient]
+        self.leafMap = {} # type: Dict[str,RPCClient]
 
-    def get_config_from_object(self,obj):
-        '''
-            从对象中获取配置
-        :param obj:
-        :return:
-        '''
-        for key in dir(obj):
-            if key.isupper():
-                self.config[key] = getattr(obj, key)
-        return self.config
-
-    def getLocalRoot(self):
+    def getRoot(self):
         '''
             根据节点名称获取本地根节点实例
         :param name: 节点名称
@@ -62,17 +53,66 @@ class GlobalObject(metaclass=Singleton):
         '''
         return self.root
 
-    def getRemoteRoot(self, name:str) -> RemoteObject:
+    def getLeaf(self, name: str):
+        '''
+
+        :param name:
+        :return:
+        '''
+        return self.leafMap.get(name)
+
+    def getRemote(self, name: str) -> RemoteObject:
         '''
             根据节点名称获取节点实例
         :param name: 节点名称
         :return:
         '''
-        remote_obj = self.remoteRoots.get(name)
-        if remote_obj:
-            return remote_obj
+        remoteObj = self.remoteMap.get(name)
+        if remoteObj:
+            return remoteObj
         else:
             raise RemoteUnFindedError
+
+    def getRemoteConfig(self, name: str) -> Dict:
+        remoteObj = self.remoteMap.get(name)
+        if remoteObj:
+            return remoteObj.getConfig()
+        else:
+            raise RemoteUnFindedError
+
+    def addRemoteObject(self, name: str, id: str):
+        '''
+
+        :param name:
+        :param id:
+        :return:
+        '''
+        remoteName = ":".join([name,id])
+        remoteObject = RemoteObject(remoteName)
+        self.remoteMap[remoteName] = remoteObject
+        return remoteObject
+
+    def getRemoteObject(self, name: str, id: str) -> Union[RemoteObject,None]:
+        '''
+
+        :param name:
+        :param id:
+        :return:
+        '''
+        remoteName = ":".join([name, id])
+        return self.remoteMap.get(remoteName,None)
+
+    # def getRemoteRoot(self, name:str) -> RemoteObject:
+    #     '''
+    #         根据节点名称获取节点实例
+    #     :param name: 节点名称
+    #     :return:
+    #     '''
+    #     remote_obj = self.remoteRoots.get(name)
+    #     if remote_obj:
+    #         return remote_obj
+    #     else:
+    #         raise RemoteUnFindedError
 
     def set(self,name,value):
         '''
@@ -91,6 +131,17 @@ class GlobalObject(metaclass=Singleton):
         :return:
         '''
         return getattr(self,name,default)
+
+    def get_config_from_object(self,obj):
+        '''
+            从对象中获取配置
+        :param obj:
+        :return:
+        '''
+        for key in dir(obj):
+            if key.isupper():
+                self.config[key] = getattr(obj, key)
+        return self.config
 
 def rootServiceHandle(target):
     """
@@ -122,7 +173,7 @@ class remoteServiceHandle:
         :return:
         """
         logger.debug(f"remoteServiceHandle <{self.name}>")
-        GlobalObject().getRemoteRoot(self.name)._reference._service.mapFunction(target)
+        GlobalObject().getRemote(self.name)._reference._service.mapFunction(target)
 
 localservice = Service('localservice')
 

@@ -12,14 +12,14 @@ with open(os.sep.join([os.path.dirname(os.path.abspath(__file__)),"config.json"]
 
 server = RPCServer("CLIENT_SERVER")
 
-@server.childConnectHandle
-def doChildConnect(name, transport):
+@server.leafConnectHandle
+def doLeafConnect(name, transport):
     '''
     :return
     '''
     logger.debug("{} connected".format(name))
 
-@server.childLostConnectHandle
+@server.leafLostConnectHandle
 def doChildLostConnect(childId):
     '''
     :return

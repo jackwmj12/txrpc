@@ -3,7 +3,7 @@
 # @Author   : joe lin
 # @FILE     : client.py
 # @Time     : 2021-02-20 21:16
-# @Software : txrpc
+# @Software : txrpc2
 # @Email    : jackwmj12@163.com
 # @Github   : 
 # @Desc     : 
@@ -93,8 +93,9 @@ class RPCClient(RPCBase):
 		:param kwargs:  参数2
 		:return:
 		'''
-		return GlobalObject().getRemoteRoot(remoteName).callRemote(functionName, *args, **kwargs)
-	
+		# return GlobalObject().getRemoteRoot(remoteName).callRemote(functionName, *args, **kwargs)
+		return GlobalObject().getRemote(remoteName).callRemote(functionName, *args, **kwargs)
+
 	def _connectRemote(self, name: str, target_name: str, host: str, port: int, weight: int = 10):
 		'''
 			连接 远端 节点

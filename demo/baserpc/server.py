@@ -23,8 +23,8 @@ app = RPCServer(NODE_NAME)
 def doWhenStart():
     logger.debug("i am starting")
 
-@app.childConnectHandle
-def doChildConnect(name, transport):
+@app.leafConnectHandle
+def doLeafConnect(name, transport):
     '''
     :return
     '''
@@ -35,7 +35,7 @@ def doChildConnect(name, transport):
     for i in range(1000):
         reactor.callLater(i * 2 + 1, fun)
 
-@app.childLostConnectHandle
+@app.leafLostConnectHandle
 def doChildLostConnect(childId):
     '''
     :return

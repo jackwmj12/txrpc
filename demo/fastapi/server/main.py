@@ -53,8 +53,8 @@ def register_rpc(app: FastAPI) -> None:
 
         app.state.server = RPCServer("SERVER")
         
-        @app.state.server.childConnectHandle
-        def doChildConnect(name, transport):
+        @app.state.server.leafConnectHandle
+        def doLeafConnect(name, transport):
             '''
             :return
             '''
@@ -64,7 +64,7 @@ def register_rpc(app: FastAPI) -> None:
             for i in range(1000):
                 reactor.callLater(i * 2 + 1, fun)
 
-        @app.state.server.childLostConnectHandle
+        @app.state.server.leafLostConnectHandle
         def doChildLostConnect(childId):
             '''
             :return

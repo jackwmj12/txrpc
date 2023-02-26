@@ -54,7 +54,7 @@ def fun2_():
         defer.returnValue(None)
 
 def fun_():
-    d = GlobalObject().node.pbRoot.callNodeChildByName("CLIENT", "client_test")
+    d = GlobalObject().node.pbRoot.rootCallLeafByName("CLIENT", "client_test")
     if not d:
         return None
     d.addCallback(logger.debug)

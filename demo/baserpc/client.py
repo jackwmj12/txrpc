@@ -14,7 +14,7 @@ app = RPCClient(name=NODE_NAME).clientConnect()
 
 def p():
     logger.debug(f"config : {GlobalObject().config}")
-    logger.debug(f"remoteMap : {GlobalObject().remoteMap}")
+    logger.debug(f"leafRemoteMap : {GlobalObject().leafRemoteMap}")
     logger.debug(f"root : {GlobalObject().root}")
     logger.debug(f"leafNodeMap : {GlobalObject().leafNodeMap}")
     logger.debug(100 * "*")

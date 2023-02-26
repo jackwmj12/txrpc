@@ -6,7 +6,7 @@ import sys
 from loguru import logger
 from twisted.internet.defer import Deferred
 
-def delay_import(modules, delay=0.1):
+def delayImport(modules, delay=0.1):
     '''
         延时调用
     :param modules: 模块地址

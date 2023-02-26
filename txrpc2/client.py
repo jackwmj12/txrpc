@@ -117,7 +117,7 @@ class RPCClient(RPCBase):
 		# 设置远程调用对象的权重
 		# 保存远程调用对象
 		remote = RemoteObject(name).setWeight(weight)
-		GlobalObject().remoteMap[remoteName] = remote
+		GlobalObject().leafRemoteMap[remoteName] = remote
 		
 		d = remote.connect((host, port))
 		d.addCallback(lambda ign: logger.debug(f"当前节点 : {name} 连接节点 : {remoteName} 成功 准备导入服务 : {self.servicePath}"))

@@ -55,7 +55,7 @@ class RPCServer(RPCBase):
 		reactor.listenTCP(port, BilateralFactory(self.pbRoot))
 		# service = Service(name = name)
 		# # 将服务添加到root
-		# self.pbRoot.addRootServiceChannel(service)
+		# self.pbRoot.rootAddServiceChannel(service)
 		# 注册服务
 		self.registerService(self.service_path)
 		# 配置到全局内容中

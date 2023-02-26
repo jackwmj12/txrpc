@@ -213,7 +213,7 @@ class NodeManager(object):
         else:
             logger.error("nodes %s is not exist " % nodeChild.getName())
             
-    def dropNodeChildById(self,childId : int) -> bool:
+    def dropNodeChildByID(self,childId : int) -> bool:
         '''
         删除一个child 节点
         @param childId: Child ID 

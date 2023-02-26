@@ -35,7 +35,7 @@ class BilateralBroker(pb.Broker):
     '''
     def connectionLost(self, reason):
         clientID = self.transport.sessionno
-        d = self.factory.root.dropNodeChildById(clientID)
+        d = self.factory.root.rootDropLeafById(clientID)
         d.addCallback(lambda ign : pb.Broker.connectionLost(self, reason))
 
 class BilateralFactory(pb.PBServerFactory):
@@ -52,14 +52,14 @@ class PBRoot(pb.Root):
         self.dnsmanager: NodeManager = dnsmanager
         self.rootService: Service = None
         
-    def addRootServiceChannel(self,service : Service):
+    def rootAddServiceChannel(self,service : Service):
         '''
             添加服务通道
         @param service: Service Object(In bilateral.services)
         '''
         self.rootService: Service = service
 
-    def doLeafConnect(self,name,transport) -> Deferred:
+    def rootDoLeafConnect(self,name,transport) -> Deferred:
         """
             当node节点连接时的处理
         :param name: 子节点名称
@@ -69,16 +69,16 @@ class PBRoot(pb.Root):
         deferList = []
         try:
             logger.debug("node [%s] connect" % name)
-            for service in GlobalObject().leafConnectService:
+            for service in GlobalObject().rootRecvConnectService:
                 # 遍历注册的 子节点连接服务(函数)并调用
                 deferList.append(
-                    GlobalObject().leafConnectService.callFunction(service,name,transport)
+                    GlobalObject().rootRecvConnectService.callFunction(service,name,transport)
                 )
         except Exception as e:
             logger.error(str(e))
         return defer.DeferredList(deferList,consumeErrors=True)
             
-    def doChildLostConnect(self,childId) -> Deferred:
+    def rootDoLeafLostConnect(self,childId) -> Deferred:
         """
             当node节点断开时的处理
         :param childId:  子节点ID
@@ -87,38 +87,39 @@ class PBRoot(pb.Root):
         deferList = []
         try:
             logger.debug("node [%s] lose" % childId)
-            for service in GlobalObject().leafLostConnectService:
+            for service in GlobalObject().rootLostConnectService:
                 # 遍历注册的 子节点断开连接服务(函数)并调用
-                deferList.append(GlobalObject().leafLostConnectService.callFunction(service,childId))
+                deferList.append(GlobalObject().rootLostConnectService.callFunction(service,childId))
         except Exception as e:
             logger.error(str(e))
         return defer.DeferredList(deferList, consumeErrors=True)
 
-    def dropLeaf(self,*args,**kw):
+    def rootDropLeaf(self,*args,**kw):
         '''
             删除子节点记录
         '''
         self.dnsmanager.dropNodeChild(*args,**kw)
         
-    def dropNodeChildById(self,childId) -> Deferred:
+    def rootDropLeafById(self,childId) -> Deferred:
         '''
             根据ID删除子节点记录
         :param childId:
         :return:
         '''
-        if self.dnsmanager.dropNodeChildById(childId):
-            return self.doChildLostConnect(childId)
+        if self.dnsmanager.dropNodeChildByID(childId):
+            return self.rootDoLeafLostConnect(childId)
         else:
-            return self.doChildLostConnect(None)
+            return self.rootDoLeafLostConnect(None)
     
-    def callNodeChildByName(self,childname,*args,**kw)->Deferred:
+    def rootCallLeafByName(self,childname,*args,**kw)->Deferred:
         '''
-            通过节点组名称调用子节点的接口,节点管理器会根据权重随机调用节点
+            通过节点组名称调用子节点的接口
+            节点管理器会根据权重随机调用同名节点
         @param childname: str 子节点组的名称
         '''
         return self.dnsmanager.callNodeChildByName(childname,*args,**kw)
     
-    def callNodeChildByID(self,childId,*args,**kw)->Deferred:
+    def rootCallLeafByID(self,childId,*args,**kw)->Deferred:
         '''
             通过子节点的唯一ID调用子节点的接口
         @param childId: int 子节点的id
@@ -138,7 +139,7 @@ class PBRoot(pb.Root):
         child.setWeight(weight)
         child.setTransport(transport)
         self.dnsmanager.addNodeChild(child)
-        return self.doLeafConnect(name,transport)
+        return self.rootDoLeafConnect(name,transport)
         
     def remote_callFunction(self, command, *args, **kw):
         '''

@@ -21,8 +21,6 @@ Created on 2019-11-22
 '''
 import os
 from typing import Dict, List, Any, Union, Callable
-
-from txrpc2.distributed.manager import RemoteUnFindedError, LocalUnFindedError
 from txrpc2.service.service import Service
 from loguru import logger
 from txrpc2.utils.singleton import Singleton
@@ -46,22 +44,19 @@ class GlobalObject(metaclass=Singleton):
 
         ############################### leaf 节点 ######################################################
         self.leafNodeMap = {} # type: Dict[str,RPCClient]
-
         # 用于保存远程调用对象
-        # LEAF 调用 ROOT 需要 通过 RemoteMap 中的对象进行调用
-        self.remoteMap = {} # type: Dict[str,RemoteObject]
-
-        self.connectRootMap: Dict[str: Service] = {} # leaf 节点 成功连接 ROOT 时运行
-        self.lostConnectRootMap: Dict[str: Service] = {} # leaf 节点 与 ROOT 断开 时运行
+        # LEAF 调用 ROOT 需要 通过 leafRemoteMap 中的对象进行调用
+        self.leafRemoteMap = {}  # type: Dict[str,RemoteObject]
+        self.leafConnectServiceMap: Dict[str: Service] = {} # leaf 节点 成功连接 ROOT 时在 LEAF 节点 运行
+        self.leafLostConnectServiceMap: Dict[str: Service] = {} # leaf 节点 与 ROOT 断开 时运行
         ################################################################################################
 
         ############################### root 节点 ######################################################
         # 用于保存ROOT对象
         # ROOT 调用 LEAF 通过该对象调用
         self.root = None  # type: RPCServer
-
-        self.leafConnectService = Service("child_connect_service") # leaf 节点成功连入时调用
-        self.leafLostConnectService = Service("child_lost_connect_service") # leaf 节点断开连接时调用
+        self.rootRecvConnectService = Service("root_recv_connect_service") # leaf 节点成功连入时调用
+        self.rootLostConnectService = Service("root_lost_connect_service") # leaf 节点断开连接时调用
         ################################################################################################
 
     def getRoot(self): #
@@ -85,7 +80,7 @@ class GlobalObject(metaclass=Singleton):
 
         :return:
         '''
-        return self.remoteMap.get(name) # type: RemoteObject
+        return self.leafRemoteMap.get(name) # type: RemoteObject
 
     def callRoot(self, remoteName: str, functionName: str, *args, **kwargs):
         '''
@@ -107,7 +102,7 @@ class GlobalObject(metaclass=Singleton):
         :param kwargs:  参数
         :return:
         '''
-        return GlobalObject().getRoot().pbRoot.callNodeChildByName(leafName, functionName, *args, **kwargs)
+        return GlobalObject().getRoot().pbRoot.rootCallLeafByName(leafName, functionName, *args, **kwargs)
 
     def callLeafByID(self, leafID: str, functionName: str, *args, **kwargs):
         '''
@@ -118,7 +113,7 @@ class GlobalObject(metaclass=Singleton):
         :param kwargs:  参数
         :return:
         '''
-        return GlobalObject().getRoot().pbRoot.callNodeChildByID(leafID, functionName, *args, **kwargs)
+        return GlobalObject().getRoot().pbRoot.rootCallLeafByID(leafID, functionName, *args, **kwargs)
 
     def set(self,name,value):
         '''
@@ -180,7 +175,7 @@ def leafConnectHandle(target):
     :param target: 函数
     :return:
     """
-    GlobalObject().leafConnectService.mapFunction(target)
+    GlobalObject().rootRecvConnectService.mapFunction(target)
 
 def leafLostConnectHandle(target):
     """
@@ -189,7 +184,7 @@ def leafLostConnectHandle(target):
     :param target: 函数
     :return:
     """
-    GlobalObject().leafLostConnectService.mapFunction(target)
+    GlobalObject().rootLostConnectService.mapFunction(target)
 
 class connectRootHandle:
     '''
@@ -209,9 +204,9 @@ class connectRootHandle:
         :param target:
         :return:
         """
-        if not GlobalObject().connectRootMap.get(self.name):
-            GlobalObject().connectRootMap[self.name] = Service("connect_service")  # rpc连接成功时运行
-        GlobalObject().connectRootMap.get(self.name).mapFunction(target)
+        if not GlobalObject().leafConnectServiceMap.get(self.name):
+            GlobalObject().leafConnectServiceMap[self.name] = Service(f"leaf_connect_service_{self.name}")  # rpc连接成功时运行
+        GlobalObject().leafConnectServiceMap.get(self.name).mapFunction(target)
 
 class lostConnectRootHandle:
     '''
@@ -231,9 +226,9 @@ class lostConnectRootHandle:
         :param target:
         :return:
         """
-        if not GlobalObject().lostConnectRootMap.get(self.name):
-            GlobalObject().lostConnectRootMap[self.name] = Service("lost_connect_service")  # rpc连接成功时运行
-        GlobalObject().lostConnectRootMap.get(self.name).mapFunction(target)
+        if not GlobalObject().leafLostConnectServiceMap.get(self.name):
+            GlobalObject().leafLostConnectServiceMap[self.name] = Service(f"leaf_lost_connect_service_{self.name}")  # rpc连接成功时运行
+        GlobalObject().leafLostConnectServiceMap.get(self.name).mapFunction(target)
 
 def rootServiceHandle(target):
     """
@@ -245,7 +240,7 @@ def rootServiceHandle(target):
     """
     if not GlobalObject().root.pbRoot.rootService:
         service = Service(name = GlobalObject().root.getName())
-        GlobalObject().root.pbRoot.addRootServiceChannel(service)
+        GlobalObject().root.pbRoot.rootAddServiceChannel(service)
     GlobalObject().root.pbRoot.rootService.mapFunction(target)
 
 class remoteServiceHandle:

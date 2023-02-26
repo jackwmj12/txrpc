@@ -32,7 +32,7 @@ from typing import List, Union
 
 from txrpc2.service.service import Service
 from txrpc2.globalobject import GlobalObject
-from txrpc2.utils import delay_import
+from txrpc2.utils import delayImport
 from loguru import logger
 
 class RPCBase():
@@ -55,7 +55,7 @@ class RPCBase():
 		'''
 		if servicePath:
 			logger.debug(f"即将导入模块 : {servicePath}")
-			delay_import(servicePath)
+			delayImport(servicePath)
 	
 	def twisted_init(self):
 		'''

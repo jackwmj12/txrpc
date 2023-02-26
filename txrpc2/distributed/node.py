@@ -39,15 +39,17 @@ class RpcClientFactory(pb.PBClientFactory):
     def clientConnectionLost(self, connector, reason, reconnecting=0):
         super().clientConnectionLost(connector, reason, reconnecting)
         deferList = []
-        for service in GlobalObject().lostConnectRootMap.get(self.name, None):
-            deferList.append(GlobalObject().lostConnectRootMap.get(self.name).callFunction(service))
+        if GlobalObject().lostConnectRootMap.get(self.name, None):
+            for service in GlobalObject().lostConnectRootMap.get(self.name, None):
+                deferList.append(GlobalObject().lostConnectRootMap.get(self.name).callFunction(service))
         return defer.DeferredList(deferList, consumeErrors=True)
     
     def clientConnectionMade(self, broker):
         super().clientConnectionMade(broker)
         deferList = []
-        for service in GlobalObject().connectRootMap.get(self.name, None):
-            deferList.append(GlobalObject().connectRootMap.get(self.name).callFunction(service))
+        if GlobalObject().connectRootMap.get(self.name, None):
+            for service in GlobalObject().connectRootMap.get(self.name, None):
+                deferList.append(GlobalObject().connectRootMap.get(self.name).callFunction(service))
         return defer.DeferredList(deferList, consumeErrors=True)
 
 class RemoteObject(object):

@@ -2,7 +2,7 @@ import json
 import os
 
 import txrpc2
-from txrpc2.globalobject import GlobalObject
+from txrpc2.globalobject import GlobalObject, leafConnectHandle, leafLostConnectHandle
 from loguru import logger
 from txrpc2.server import RPCServer
 
@@ -27,7 +27,7 @@ def fun():
 
 server = RPCServer("SERVER")
 
-@server.leafConnectHandle
+@leafConnectHandle
 def doLeafConnect(name, transport):
     '''
     :return
@@ -38,7 +38,7 @@ def doLeafConnect(name, transport):
 
     reactor.callLater(1, fun)
 
-@server.leafLostConnectHandle
+@leafLostConnectHandle
 def doChildLostConnect(childId):
     '''
     :return

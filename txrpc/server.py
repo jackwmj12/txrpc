@@ -42,7 +42,7 @@ class RPCServer(RPC):
 		:return
 		'''
 		# root对象监听制定端口
-		super(RPCServer,self).__init__()
+		super(RPCServer,self).__init__(name=name)
 		
 		self.name = name
 		

@@ -127,7 +127,7 @@ class ServiceBase(object):
                 logger.error('the command ' + str(targetKey) + ' not Found on service in ' + self._name)
                 return None
             if targetKey not in self.unDisplay:
-                logger.debug(f"RPC : <remote> call method <{targetKey}> : <{target.__name__}> on service[single]")
+                logger.warning(f"RPC : <remote> call method <{targetKey}> : <{target.__name__}> on service[single]")
 
             defer_data = target(*args,**kw)
             if isinstance(defer_data, defer.Deferred):
@@ -163,7 +163,7 @@ class ServiceBase(object):
             if not target:
                 logger.error('the command ' + str(targetKey) + ' not Found on service in ' + self._name)
                 return None
-            logger.debug("RPC : <remote> call method <%s> on service[parallel]" % target.__name__)
+            # logger.debug("RPC : <remote> call method <%s> on service[parallel]" % target.__name__)
             d = threads.deferToThread(target,*args,**kw)
         finally:
             self._lock.release()

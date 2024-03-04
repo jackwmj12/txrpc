@@ -52,7 +52,7 @@ def delay_import(modules, delay=0.1):
         if modules:
             if isinstance(modules, (list, tuple)):
                 for module in modules:
-                    logger.debug("即将导入模块 : <{module}>".format(module=module))
+                    logger.debug("导入模块 : <{module}>".format(module=module))
                     if module not in sys.modules:
                         __import__(module)
                     else:

@@ -58,13 +58,6 @@ class RPC():
         reactor.callWhenRunning(self._doWhenStart)
         reactor.run()
 
-    def install(self):
-        '''
-                :param
-        '''
-        from twisted.internet import reactor
-        reactor.callWhenRunning(self._doWhenStart)
-
     def registerService(self, service_path: Union[List[str], str, None]):
         '''
                 注册服务
@@ -72,7 +65,7 @@ class RPC():
                         远端RPC服务
         '''
         if service_path:
-            logger.debug(f"即将导入模块:{service_path}")
+            logger.debug(f"导入模块:{service_path}")
             delay_import(service_path)
 
     def twisted_init(self):
@@ -88,6 +81,7 @@ class RPC():
             "初始化socket超时时间为：{}".format(
                 GlobalObject().config.get(
                     "SOCKET_TIME_OUT", 300)))
+
         from twisted.internet import reactor
         reactor.suggestThreadPoolSize(
             GlobalObject().config.get(
@@ -124,7 +118,8 @@ class RPC():
         :return:
         '''
         self.registerService(self.local_service_path)  # 重载本地服务
-        # self.registerService(self.remote_service_path)  # 注意!
+        # self.registerService(self.remote_service_path)
+        # 注意! remote_servic
         # 该服务必须在RPC连接成功后调用,而非程序启动调用
 
         defer_list = []

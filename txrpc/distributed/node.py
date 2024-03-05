@@ -27,7 +27,6 @@ from typing import Union
 
 from txrpc.distributed.reference import ProxyReference
 from txrpc.globalobject import GlobalObject
-from txrpc.service.service import Service
 from loguru import logger
 
 class RpcClientFactory(pb.PBClientFactory):
@@ -63,19 +62,17 @@ class RpcClientFactory(pb.PBClientFactory):
 class RemoteObject(object):
     '''远程调用对象'''
     
-    def __init__(self, name):
+    def __init__(self, nameOnRemote, remoteNameOnLocal = 'proxy'):
         '''初始化远程调用对象
-        @param port: int 远程分布服的端口号
-        @param rootaddr: 根节点服务器地址
+        @param nameOnRemote:  本节点地址在
+        @param remoteNameOnLocal: 根节点服务器地址
         '''
         self._id = ""
-        self._name = name
+        self._name = nameOnRemote
         self._weight: int = 10
-        self._factory = RpcClientFactory(name)  # pb的客户端，客户端可以执行server端的remote方法
-        self._reference = ProxyReference()  # 创建代理通道，该通道包含添加服务，代理发送数据功能
+        self._factory = RpcClientFactory(remoteNameOnLocal)  # pb的客户端，客户端可以执行server端的remote方法
+        self._reference = ProxyReference(remoteNameOnLocal)  # 创建代理通道，该通道包含添加服务，代理发送数据功能
         self._addr: Union[str, None] = None
-        # self._config: Dict = {}
-        # self.connectedService = CommandService("connected_service")
 
     def __str__(self):
         if  not self._id :

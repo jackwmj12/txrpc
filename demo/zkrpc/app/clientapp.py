@@ -1,9 +1,9 @@
 import aiozk
 import os
-from txrpc.globalobject import remoteserviceHandle
+from txrpc.globalobject import remoteServiceHandle
 from loguru import logger
 
-@remoteserviceHandle("SERVER")
+@remoteServiceHandle("SERVER")
 async def client_test():
     zk = aiozk.ZKClient('{}:2181'.format(os.environ.get("TEST_ZK_HOST")))
     await zk.start()

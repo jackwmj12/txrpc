@@ -11,7 +11,7 @@ import os
 import aiozk
 from twisted.internet import defer
 
-from txrpc.globalobject import GlobalObject
+from txrpc.globalobject import GlobalObject, rootWhenLeafConnectHandle, rootWhenLeafLostConnectHandle
 from txrpc.utils import asDeferred
 from txrpc.server import RPCServer
 
@@ -54,7 +54,7 @@ def fun2_():
         defer.returnValue(None)
 
 def fun_():
-    d = GlobalObject().node.pbRoot.callChildByName("CLIENT", "client_test")
+    d = GlobalObject().callLeaf("CLIENT", "client_test")
     if not d:
         return None
     d.addCallback(logger.debug)
@@ -63,7 +63,7 @@ def fun_():
 
 server = RPCServer("SERVER")
 
-@server.childConnectHandle
+@rootWhenLeafConnectHandle
 def doChildConnect(name, transport):
     '''
     :return
@@ -72,7 +72,7 @@ def doChildConnect(name, transport):
     logger.debug("{} connected".format(name))
     reactor.callLater(1, fun_)
 
-@server.childLostConnectHandle
+@rootWhenLeafLostConnectHandle
 def doChildLostConnect(childId):
     '''
     :return

@@ -60,7 +60,7 @@ class Node():
             hand = [child for _ in range(child.getWeight())]
             self.hand.extend(hand)
             random.shuffle(self.hand)  # 洗牌
-            logger.debug(f"node <{self.name}> append Nodechild <{self.children}> success ")
+            logger.debug(f"node <{self.name}> append NodeChild <{self.children}> success ")
         else:
             logger.error("append failed , node %s is already exist" % child.getName())
     

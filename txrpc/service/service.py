@@ -26,7 +26,7 @@ import threading
 from twisted.internet import defer,threads
 from twisted.internet.defer import Deferred, fail, succeed
 from twisted.python import failure
-from typing import Callable
+from typing import Callable, Set, Dict
 
 from txrpc.utils import as_deferred
 from loguru import logger
@@ -239,7 +239,7 @@ class CommandService(Service):
         finally:
             self._lock.release()
 
-    def unMapTarget(self, f: Callable):
+    def unmapFunction(self, f: Callable):
         """
             从服务中移除云函数
         :param f:

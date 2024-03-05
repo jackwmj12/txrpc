@@ -45,10 +45,14 @@ class RPC():
         '''
             :return
         '''
+        self.name = name
         self.servicePath: Union[List[str], None] = None  # 服务的py文件路径
 
-        from twisted.internet import reactor
-        reactor.callWhenRunning(self._doWhenStart)  # 注册开始运行函数
+    def setName(self, name):
+        self.name = name
+
+    def getName(self):
+        return self.name
 
     def run(self):
         '''
@@ -65,15 +69,15 @@ class RPC():
         from twisted.internet import reactor
         reactor.callWhenRunning(self._doWhenStart)
 
-    def registerService(self, service_path: Union[List[str], str, None]):
+    def registerService(self, servicePath: Union[List[str], str, None]):
         '''
                 注册服务
                         本地服务
                         远端RPC服务
         '''
-        if service_path:
-            logger.debug(f"导入模块:{service_path}")
-            delay_import(service_path)
+        if servicePath:
+            logger.debug(f"导入模块:{servicePath}")
+            delay_import(servicePath)
 
     def twisted_init(self):
         '''

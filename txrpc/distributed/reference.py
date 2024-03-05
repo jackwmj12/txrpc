@@ -22,7 +22,7 @@ Created on 2019-11-22
 '''
 
 from twisted.spread import pb
-from txrpc.service.service import Service
+from txrpc.service.service import CommandService as Service
 from loguru import logger
 
 

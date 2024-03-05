@@ -30,7 +30,6 @@ from twisted.internet import defer
 from txrpc.core import RPC
 from txrpc.distributed.node import RemoteObject
 from txrpc.globalobject import GlobalObject
-from txrpc.service.service import Service
 from loguru import logger
 
 
@@ -46,14 +45,12 @@ class RPCClient(RPC):
         :param name: 节点名称
         '''
         super(RPCClient, self).__init__(name=name)
-        self.connectService = Service("connect_service")  # rpc服务连接成功时运行
-        self.lostConnectService = Service("lost_connect_service")  # rpc服务连接断开时运行
 
-    def clientConnect(self, name=None, host=None, port=None, weight=None):
+    def clientConnect(self, name=None, remoteName=None, host=None, port=None, weight=None):
         '''
-            todo 此处返回 self 是否不妥
-                RPC客户端 主动连接 RPC服务端 节点
+
         :param name:  本节点名称
+        :param remoteName: 目标节点名称
         :param host:  server节点host
         :param port:  server节点port
         :param weight:  本节点权重
@@ -91,21 +88,20 @@ class RPCClient(RPC):
         assert name is not None, "target_name 不能为空"
         logger.debug("target_name ...")
 
-        remote = RemoteObject(name)
+        # 创建远程对象实例
+        remote = RemoteObject(name, remoteName)
         remote.setWeight(weight)
-        GlobalObject().remote_map[name] = remote
+        # 远程对象存入 leafRemoteMap
+        GlobalObject().leafRemoteMap[remoteName] = remote
+        # 创建连接
         d = remote.connect(
             (host, port)
-        )
-        d.addCallback(
-            lambda ign: self._doWhenConnect()
-        )
-        d.addCallback(
+        ).addCallback(
             lambda ign: self.registerService(
-                self.remote_service_path
+                self.servicePath
             )
         )
-        return self
+        return d
 
     @staticmethod
     def callRemote(remoteName: str, functionName: str, *args, **kwargs):
@@ -117,41 +113,8 @@ class RPCClient(RPC):
         :param kwargs:  参数2
         :return:
         '''
-        return GlobalObject().getRemote(remoteName).callRemote(
-            functionName, *args, **kwargs)
-
-    def connectServiceHandle(self, target):
-        '''
-                注册连接成功时触发函数的handler
-        :param target: 函数
-        :return:
-        '''
-        self.connectService.mapTarget(target)
-
-    def lostConnectServiceHandle(self, target):
-        '''
-                注册连接断开时触发函数的handler
-        :param target: 函数
-        :return:
-        '''
-        self.lostConnectService.mapTarget(target)
-
-    def _doWhenConnect(self) -> defer.Deferred:
-        '''
-                连接成功时触发
-        :return:
-        '''
-        defer_list = []
-        for service in self.connectService:
-            defer_list.append(self.connectService.callTarget(service))
-        return defer.DeferredList(defer_list, consumeErrors=True)
-
-    def _doWhenLostConnect(self) -> defer.Deferred:
-        '''
-                连接断开时触发
-        :return:
-        '''
-        defer_list = []
-        for service in self.lostConnectService:
-            defer_list.append(self.lostConnectService.callTarget(service))
-        return defer.DeferredList(defer_list, consumeErrors=True)
+        return GlobalObject().callRoot(
+            remoteName,
+            functionName,
+            *args, **kwargs
+        )

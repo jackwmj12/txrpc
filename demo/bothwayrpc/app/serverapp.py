@@ -1,5 +1,5 @@
 
-from txrpc.globalobject import remoteserviceHandle, rootserviceHandle
+from txrpc.globalobject import remoteServiceHandle, rootServiceHandle
 
 @rootserviceHandle
 def server_test():

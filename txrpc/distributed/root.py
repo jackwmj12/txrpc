@@ -36,7 +36,7 @@ class BilateralBroker(pb.Broker):
     '''
     def connectionLost(self, reason):
         clientID = self.transport.sessionno
-        d = self.factory.root.rootDropLeafById(clientID)
+        d = self.factory.root.dropLeafById(clientID)
         d.addCallback(lambda ign : pb.Broker.connectionLost(self, reason))
 
 class BilateralFactory(pb.PBServerFactory):
@@ -53,14 +53,14 @@ class PBRoot(pb.Root):
         self.dnsmanager: NodeManager = dnsmanager
         self.rootService: Service = None
         
-    def rootAddServiceChannel(self,service : Service):
+    def addServiceChannel(self,service : Service):
         '''
             添加服务通道
         @param service: Service Object(In bilateral.services)
         '''
         self.rootService: Service = service
 
-    def rootDoLeafConnect(self,name,transport) -> Deferred:
+    def rootWhenLeafConnect(self,name,transport) -> Deferred:
         """
             当node节点连接时的处理
         :param name: 子节点名称
@@ -79,7 +79,7 @@ class PBRoot(pb.Root):
             logger.error(str(e))
         return defer.DeferredList(deferList,consumeErrors=True)
             
-    def rootDoLeafLostConnect(self,childId) -> Deferred:
+    def rootWhenLeafLostConnect(self,childId) -> Deferred:
         """
             当node节点断开时的处理
         :param childId:  子节点ID
@@ -95,24 +95,24 @@ class PBRoot(pb.Root):
             logger.error(str(e))
         return defer.DeferredList(deferList, consumeErrors=True)
 
-    def rootDropLeaf(self,*args,**kw):
+    def dropLeaf(self,*args,**kw):
         '''
             删除子节点记录
         '''
         self.dnsmanager.dropNodeChild(*args,**kw)
         
-    def rootDropLeafById(self,childId) -> Deferred:
+    def dropLeafById(self,childId) -> Deferred:
         '''
             根据ID删除子节点记录
         :param childId:
         :return:
         '''
         if self.dnsmanager.dropNodeChildByID(childId):
-            return self.rootDoLeafLostConnect(childId)
+            return self.rootWhenLeafLostConnect(childId)
         else:
-            return self.rootDoLeafLostConnect(None)
+            return self.rootWhenLeafLostConnect(None)
     
-    def rootCallLeafByName(self,childname,*args,**kw)->Deferred:
+    def callLeafByName(self,childname,*args,**kw)->Deferred:
         '''
             通过节点组名称调用子节点的接口
             节点管理器会根据权重随机调用同名节点
@@ -120,7 +120,7 @@ class PBRoot(pb.Root):
         '''
         return self.dnsmanager.callNodeChildByName(childname,*args,**kw)
     
-    def rootCallLeafByID(self,childId,*args,**kw)->Deferred:
+    def callLeafByID(self,childId,*args,**kw)->Deferred:
         '''
             通过子节点的唯一ID调用子节点的接口
         @param childId: int 子节点的id
@@ -140,7 +140,7 @@ class PBRoot(pb.Root):
         child.setWeight(weight)
         child.setTransport(transport)
         self.dnsmanager.addNodeChild(child)
-        return self.rootDoLeafConnect(name,transport)
+        return self.rootWhenLeafConnect(name,transport)
         
     def remote_callFunction(self, command, *args, **kw):
         '''

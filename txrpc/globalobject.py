@@ -21,7 +21,6 @@ Created on 2019-11-22
 '''
 import os
 from typing import Dict, List, Any, Union, Optional, Callable
-from txrpc.distributed.node import RemoteObject
 from txrpc.service.service import Service
 from loguru import logger
 from txrpc.utils.singleton import Singleton
@@ -44,45 +43,43 @@ class GlobalObject(metaclass=Singleton):
         ################################################################################################
 
         ############################### leaf 节点 ######################################################
-        self.leafNodeMap = {} # type: Dict[str,RPCClient]
-        # 用于保存远程调用对象
-        # LEAF 调用 ROOT 需要 通过 leafRemoteMap 中的对象进行调用
-        self.leafRemoteMap = {}  # type: Dict[str,RemoteObject]
-        self.leafConnectSuccessServiceMap: Dict[str: Service] = {} # leaf 节点 连接 ROOT 成功 时在 LEAF 节点 运行
+        self.leaf = None  # type: RPCClient     # 用于保存LEAF对象
+        self.leafRemoteMap = {}  # type: Dict[str,RemoteObject]     # 用于保存远程调用对象
+        self.leafConnectSuccessServiceMap: Dict[str: Service] = {}  # leaf 节点 连接 ROOT 成功 时在 LEAF 节点 运行
         self.leafConnectFailedServiceMap: Dict[str: Service] = {}  # leaf 节点 连接 ROOT 失败 时在 LEAF 节点 运行
-        self.leafLostConnectServiceMap: Dict[str: Service] = {} # leaf 节点 与 ROOT 断开 时运行
+        self.leafLostConnectServiceMap: Dict[str: Service] = {}  # leaf 节点 与 ROOT 断开 时运行
         ################################################################################################
 
         ############################### root 节点 ######################################################
-        # 用于保存ROOT对象
-        # ROOT 调用 LEAF 通过该对象调用
-        self.root = None  # type: RPCServer
+        self.root = None  # type: RPCServer # 用于保存ROOT对象
+        self.rootRemoteMap = {}  # type: Dict[str,RemoteObject] # 用于保存远程调用对象
         self.rootRecvConnectService = Service("root_recv_connect_service") # leaf 节点成功连入时调用
         self.rootLostConnectService = Service("root_lost_connect_service") # leaf 节点断开连接时调用
         ################################################################################################
 
-    def getRoot(self): #
-        '''
-            根据节点名称获取本地根节点实例
-        :param name: 节点名称
-        :return:
-        '''
+        ############################### master 节点 ######################################################
+        self.masterremote = None  # type: # RemoteObject
+        ################################################################################################
+
+    def getRoot(self):
         return self.root # type: RPCServer
 
-    def getLeaf(self, name: str):
-        '''
+    def getLeaf(self):
+        return self.leaf  # type: RPCClient
 
-        :param name:
-        :return:
+    def getLeafRemoteObject(self, name: str):
         '''
-        return self.leafNodeMap.get(name) # type: Dict[str,RPCClient]
-
-    def getRemoteObject(self, name: str):
-        '''
-
+            root 节点中 获取 远端 leaf 节点对象
         :return:
         '''
         return self.leafRemoteMap.get(name) # type: RemoteObject
+
+    def getRootRemoteObject(self, name: str):
+        '''
+            leaf 节点中 获取 远端 root 节点对象
+        :return:
+        '''
+        return self.rootRemoteMap.get(name) # type: RemoteObject
 
     def callRoot(self, remoteName: str, functionName: str, *args, **kwargs):
         '''
@@ -93,7 +90,7 @@ class GlobalObject(metaclass=Singleton):
         :param kwargs:  参数2
         :return:
         '''
-        return GlobalObject().getRemoteObject(remoteName).callRemote(functionName, *args, **kwargs)
+        return GlobalObject().getRootRemoteObject(remoteName).callRemote(functionName, *args, **kwargs)
 
     def callLeaf(self, leafName: str, functionName: str, *args, **kwargs):
         '''
@@ -104,7 +101,7 @@ class GlobalObject(metaclass=Singleton):
         :param kwargs:  参数
         :return:
         '''
-        return GlobalObject().getRoot().pbRoot.rootCallLeafByName(leafName, functionName, *args, **kwargs)
+        return GlobalObject().getRoot().pbRoot.callLeafByName(leafName, functionName, *args, **kwargs)
 
     def callLeafByID(self, leafID: str, functionName: str, *args, **kwargs):
         '''
@@ -115,8 +112,8 @@ class GlobalObject(metaclass=Singleton):
         :param kwargs:  参数
         :return:
         '''
-        return GlobalObject().getRoot().pbRoot.rootCallLeafByID(leafID, functionName, *args, **kwargs)
-    
+        return GlobalObject().getRoot().pbRoot.callLeafByID(leafID, functionName, *args, **kwargs)
+
     def set(self,name,value):
         '''
             设置属性
@@ -146,55 +143,25 @@ class GlobalObject(metaclass=Singleton):
                 self.config[key] = getattr(obj, key)
         return self.config
 
-def startServiceHandle(target: Callable):
+def rootServiceHandle(target):
     """
-        注册程序启动时触发的函数的 Handler
-    :param target: 函数
+        通常于 root 节点上调用
+        将函数注册到 root 节点 ,进而暴露给所有 leaf 节点 以供 leaf 节点调用
     :return:
     """
-    GlobalObject().startService.mapFunction(target)
+    if not GlobalObject().root.pbRoot.rootService:
+        service = Service(name = GlobalObject().root.getName())
+        GlobalObject().root.pbRoot.addServiceChannel(service)
+    GlobalObject().root.pbRoot.rootService.mapFunction(target)
 
-def stopServiceHandle(target: Callable):
-    """
-        注册程序停止时触发的函数的 Handler
-    :param target: 函数
-    :return:
-    """
-    GlobalObject().stopService.mapFunction(target)
-
-def reloadServiceHandle(target):
-    """
-        注册程序重载时触发的函数的 Handler
-    :param target: 函数
-    :return:
-    """
-    GlobalObject().reloadService.mapFunction(target)
-
-def leafConnectHandle(target):
-    """
-        被该装饰器装饰的函数
-            会在 leaf 节点和 root 节点连接建立时,在root节点触发
-    :param target: 函数
-    :return:
-    """
-    GlobalObject().rootRecvConnectService.mapFunction(target)
-
-def leafLostConnectHandle(target):
-    """
-        被该装饰器装饰的函数
-            会在 leaf 节点和 root 节点连接断开时,在root节点触发
-    :param target: 函数
-    :return:
-    """
-    GlobalObject().rootLostConnectService.mapFunction(target)
-
+class remoteServiceHandle:
     '''
-        被该装饰器装饰的函数
-            会在 leaf 节点和 root 节点连接建立时,在 leaf<name> 节点触发
+        通常于 leaf 节点上调用
+        将被装饰的方法暴露给 远端 root<name> 节点以供 root<name> 节点调用
     '''
     def __init__(self,name):
         """
-
+            rootNode 的名称
         :param name
         """
         self.name = name
@@ -205,14 +172,88 @@ def leafLostConnectHandle(target):
         :param target:
         :return:
         """
+        logger.debug(f"remoteServiceHandle <{self.name}>")
+        assert GlobalObject().getLeafRemoteObject(self.name) != None, f"请检查 <{self.name}> 节点是否正常运行"
+        GlobalObject().getLeafRemoteObject(self.name)._reference._service.mapFunction(target)
+
+localservice = Service('localservice')
+
+def localserviceHandle(target):
+    '''
+        创建本地服务装饰器
+        被该装饰器装饰的函数
+        可以且仅可以被本地随时随地使用
+        @param target: func Object
+    '''
+    localservice.mapFunction(target)
+
+def startServiceHandle(target: Callable):
+    """
+        注册程 序启动时触发 的函数的 Handler
+    :param target: 函数
+    :return:
+    """
+    GlobalObject().startService.mapFunction(target)
+
+def stopServiceHandle(target: Callable):
+    """
+        注册 程序停止时触发 的函数的 Handler
+    :param target: 函数
+    :return:
+    """
+    GlobalObject().stopService.mapFunction(target)
+
+def reloadServiceHandle(target):
+    """
+        注册 程序重载时触发 的函数的 Handler, 一般用于master节点回调
+    :param target: 函数
+    :return:
+    """
+    GlobalObject().reloadService.mapFunction(target)
+
+def rootWhenLeafConnectHandle(target):
+    """
+        被该装饰器装饰的函数
+            会在 leaf 节点和 root 节点连接建立时, 在root节点触发
+    :param target: 函数
+    :return:
+    """
+    GlobalObject().rootRecvConnectService.mapFunction(target)
+
+def rootWhenLeafLostConnectHandle(target):
+    """
+        被该装饰器装饰的函数
+            会在 leaf 节点和 root 节点连接断开时,在root节点触发
+    :param target: 函数
+    :return:
+    """
+    GlobalObject().rootLostConnectService.mapFunction(target)
+
+class LeafConnectRootSuccessHandle:
+    '''
+        被该装饰器装饰的函数
+            会在 leaf 节点和 root<name> 节点连接建立时,在 leaf 节点触发
+    '''
+    def __init__(self, name):
+        """
+        :param name root 节点名称
+        """
+        self.name = name
+
+    def __call__(self,target):
+        """
+
+        :param target:
+        :return:
+        """
         if not GlobalObject().leafConnectSuccessServiceMap.get(self.name):
-            GlobalObject().leafConnectSuccessServiceMap[self.name] = Service(f"leaf_connect_service_{self.name}")  # rpc连接成功时运行
+            GlobalObject().leafConnectSuccessServiceMap[self.name] = Service(f"leaf_connect_success_service_{self.name}")  # rpc连接成功时运行
         GlobalObject().leafConnectSuccessServiceMap.get(self.name).mapFunction(target)
 
-class lostConnectRootHandle:
+class LeafLostConnectRootHandle:
     '''
-            被该装饰器装饰的函数
-        会在 leaf 节点和 root 节点连接断开时,在 leaf<name> 节点触发
+        被该装饰器装饰的函数
+            会在 leaf 节点和 root<name> 节点连接断开时,在 leaf 节点触发
     '''
     def __init__(self,name):
         """
@@ -231,26 +272,14 @@ class lostConnectRootHandle:
             GlobalObject().leafLostConnectServiceMap[self.name] = Service(f"leaf_lost_connect_service_{self.name}")  # rpc连接成功时运行
         GlobalObject().leafLostConnectServiceMap.get(self.name).mapFunction(target)
 
-def rootserviceHandle(target):
-    """
-        注册函数到root节点,供给root节点调用
-    :param target: 函数
-    :return:
-    """
-    if not GlobalObject().root.pbRoot.rootService:
-        service = Service(name=GlobalObject().root.getName())
-        GlobalObject().root.pbRoot.rootAddServiceChannel(service)
-    GlobalObject().root.pbRoot.rootService.mapFunction(target)
-
-class remoteServiceHandle:
+class LeafConnectRootFailedHandle:
     '''
-        从 remoteLeaf 中获取 指定 远端 RootNode
-            并将被装饰的方法暴露给 远端 RootNode
-            给予 远端 RootNode 调用
+        被该装饰器装饰的函数
+            会在 leaf 节点和 root<name> 节点连接建立失败时,在 leaf 节点触发
     '''
     def __init__(self,name):
         """
-            rootNode 的名称
+
         :param name
         """
         self.name = name
@@ -261,18 +290,8 @@ class remoteServiceHandle:
         :param target:
         :return:
         """
-        logger.debug(f"remoteServiceHandle <{self.name}>")
-        assert GlobalObject().getRemoteObject(self.name) != None, f"请检查 <{self.name}> 节点是否正常运行"
-        GlobalObject().getRemoteObject(self.name)._reference._service.mapFunction(target)
+        if not GlobalObject().leafConnectFailedServiceMap.get(self.name):
+            GlobalObject().leafConnectFailedServiceMap[self.name] = Service(f"leaf_connect_failed_service_{self.name}")  # rpc连接成功时运行
+        GlobalObject().leafConnectFailedServiceMap.get(self.name).mapFunction(target)
 
-localservice = Service('localservice')
-
-def localserviceHandle(target):
-    '''
-    创建本地服务装饰器
-    被该装饰器装饰的函数
-    可以且仅可以被本地使用
-    @param target: func Object
-    '''
-    localservice.mapTarget(target)
 

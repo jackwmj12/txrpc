@@ -71,10 +71,12 @@ class PBRoot(pb.Root):
         """
         defer_list = []
         try:
-            logger.debug("node [%s] connect" % name)
+            # logger.debug("node [%s] connect" % name)
             for service in self.childConnectService:
                 # logger.debug("service [%s] connect" % service)
-                defer_list.append(self.childConnectService.callTarget(service,name,transport))
+                defer_list.append(
+                    self.childConnectService.callTarget(service, name, transport)
+                )
         except Exception as e:
             logger.error(str(e))
         return defer.DeferredList(defer_list,consumeErrors=True)
@@ -87,7 +89,7 @@ class PBRoot(pb.Root):
         """
         defer_list = []
         try:
-            logger.debug("node [%s] lose" % childId)
+            # logger.debug("node [%s] lose" % childId)
             # del GlobalObject().remote_map[childId]
             for service in self.childLostConnectService:
                 defer_list.append(self.childLostConnectService.callTarget(service,childId))

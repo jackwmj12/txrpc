@@ -58,6 +58,13 @@ class RPC():
         reactor.callWhenRunning(self._doWhenStart)
         reactor.run()
 
+    def prepare(self):
+        '''
+                :param
+        '''
+        from twisted.internet import reactor
+        reactor.callWhenRunning(self._doWhenStart)
+
     def registerService(self, service_path: Union[List[str], str, None]):
         '''
                 注册服务

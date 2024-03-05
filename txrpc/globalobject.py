@@ -20,7 +20,7 @@ Created on 2019-11-22
     单例模式的全局对象
 '''
 import os
-from typing import Dict, List, Any, Union
+from typing import Dict, List, Any, Union, Optional
 
 from txrpc.distributed.manager import RemoteUnFindedError
 from txrpc.distributed.node import RemoteObject
@@ -34,10 +34,10 @@ class GlobalObject(metaclass=Singleton):
     def __init__(self):
         self.config = {}  # 配置信息
         self.remote_map : Dict[str:RemoteObject] = {}  # REMOTE 节点组
+        self.masterremote: Optional[RemoteObject] = None  # 当前节点连接master节点所产生的的RemoteObject("当前节点名称")
         # self.root : Union[PBRoot,None] = None # 当前连接的root节点
         
-        self.node = None  # 当前节点实例
-        self.masterremote = None  # 当前连接的master节点
+        self.node = None  # 当前节点实例 #type: Node
         self.webapp = None # 当前挂载的web服务
         
     def get_config_from_object(self,obj):

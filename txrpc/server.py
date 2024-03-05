@@ -57,9 +57,9 @@ class RPCServer(RPC):
 		from twisted.internet import reactor
 		
 		reactor.listenTCP(port, BilateralFactory(self.pbRoot))
-		
+
+		# root service 用于供给其他节点调用
 		service = Service(name=name)
-		
 		# 将服务添加到root
 		self.pbRoot.addServiceChannel(service)
 		

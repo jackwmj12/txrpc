@@ -28,24 +28,47 @@ from txrpc.service.service import Service
 from loguru import logger
 
 class RpcClientFactory(pb.PBClientFactory):
-    
+
+    def setRemoteObject(self, remoteObject):
+        setattr(self, "remoteObject", remoteObject)
+        return self
+
+    def getRemoteObject(self):
+        return getattr(self, "remoteObject", None)
+
     def clientConnectionLost(self, connector, reason, reconnecting=0):
         super().clientConnectionLost(connector, reason, reconnecting)
-    
+
+        remote_obj = self.getRemoteObject()
+        if remote_obj:
+            return remote_obj.doWhenDisconnect()
+
+    def clientConnectionFailed(self, connector, reason):
+        super().clientConnectionFailed(connector, reason)
+
+        remote_obj = self.getRemoteObject()
+        if remote_obj:
+            return remote_obj.doWhenConnectFailed()
+
     def clientConnectionMade(self, broker):
         super().clientConnectionMade(broker)
+
+        remote_obj = self.getRemoteObject()
+        if remote_obj:
+            return remote_obj.doWhenConnect()
 
 class RemoteObject(object):
     '''远程调用对象'''
     
-    def __init__(self,name):
+    def __init__(self, name):
         '''初始化远程调用对象
         @param port: int 远程分布服的端口号
         @param rootaddr: 根节点服务器地址
         '''
         self._name = name
         self._weight = 10
-        self._factory = pb.PBClientFactory() # pb的客户端，客户端可以执行server端的remote方法
+        # pb的客户端，客户端可以执行server端的remote方法
+        self._factory = RpcClientFactory().setRemoteObject(self)
         self._reference = ProxyReference()  # 创建代理通道，该通道包含添加服务，代理发送数据功能
         self._addr = None
         
@@ -74,7 +97,7 @@ class RemoteObject(object):
         '''
         self._weight = weight
         
-    def connect(self,addr) -> defer.Deferred:
+    def connect(self, addr) -> defer.Deferred:
         '''
             初始化并连接 server 节点
         '''
@@ -101,7 +124,9 @@ class RemoteObject(object):
             向远程服务端发送代理通道对象
         '''
         deferedRemote = self._factory.getRootObject()
-        return deferedRemote.addCallback(_callRemote,'takeProxy',self._name,self._weight,self._reference).addCallback(self.doWhenConnect)
+        return deferedRemote.addCallback(
+            _callRemote,'takeProxy',self._name,self._weight,self._reference
+        )
     
     def callRemote(self,commandId,*args,**kw):
         '''
@@ -110,26 +135,31 @@ class RemoteObject(object):
         logger.debug(f"RPC : call <remote> method <{commandId}> with args = {args} kwargs = {kw}")
         deferedRemote = self._factory.getRootObject()
         return deferedRemote.addCallback(_callRemote,'callTarget',commandId,*args,**kw)
-    
-    def doWhenConnect(self,ign=None):
+
+    def doWhenConnect(self):
         '''
             连接成功后触发
             :param
         '''
-        self._doWhenConnect()
-        
-    def _doWhenConnect(self):
-        '''
-            连接成功后触发
-        :param
-        '''
         for service in self.connectedService:
             self.connectedService.callTarget(service)
+
+    def doWhenDisconnect(self):
+        '''
+            连接成功后触发
+            :param
+        '''
+
+    def doWhenConnectFailed(self):
+        '''
+            连接失败后触发
+        :return:
+        '''
         
-def _callRemote(obj:RemoteObject,funcName:str,*args,**kw):
+def _callRemote(remoteObject: RemoteObject, funcName: str, *args, **kw):
     '''
     远程调用
     @param funcName: str 远程方法
     '''
-    return obj.callRemote(funcName, *args,**kw)
+    return remoteObject.callRemote(funcName, *args,**kw)
     

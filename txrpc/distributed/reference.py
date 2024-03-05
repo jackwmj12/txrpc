@@ -29,9 +29,9 @@ from loguru import logger
 class ProxyReference(pb.Referenceable):
     '''代理通道'''
     
-    def __init__(self):
+    def __init__(self, name= 'proxy'):
         '''初始化'''
-        self._service = Service('proxy')
+        self._service = Service(name)
         
     def addService(self,service):
         '''添加一条服务通道'''

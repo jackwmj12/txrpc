@@ -51,6 +51,7 @@ class RPCClient(RPC):
 
     def clientConnect(self, name=None, host=None, port=None, weight=None):
         '''
+            todo 此处返回 self 是否不妥
                 RPC客户端 主动连接 RPC服务端 节点
         :param name:  本节点名称
         :param host:  server节点host
@@ -93,12 +94,17 @@ class RPCClient(RPC):
         remote = RemoteObject(name)
         remote.setWeight(weight)
         GlobalObject().remote_map[name] = remote
-        d = remote.connect((host, port))
-        d.addCallback(lambda ign: self._doWhenConnect())
+        d = remote.connect(
+            (host, port)
+        )
+        d.addCallback(
+            lambda ign: self._doWhenConnect()
+        )
         d.addCallback(
             lambda ign: self.registerService(
-                self.remote_service_path))
-
+                self.remote_service_path
+            )
+        )
         return self
 
     @staticmethod

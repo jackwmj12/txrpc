@@ -48,17 +48,13 @@ def inlineCallbacks(f):
     def unwindGenerator(*args, **kwargs):
         ret = None
         gen = f(*args, **kwargs)
-        # print("type = ",type(gen))
-        # print("enter function:", f.__name__)
         if isinstance(gen,types.GeneratorType):
             while True:
                 try:
                     ret = gen.send(ret)
                 except _DefGen_Return as e:
-                    # print("leave function:{} result:{}".format(f.__name__, e.getValue()))
                     return e.getValue()
                 except StopIteration:
-                    # print("stop iteration raise")
                     return ret
         else:
             return gen

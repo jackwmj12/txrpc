@@ -26,110 +26,156 @@ import threading
 from twisted.internet import defer,threads
 from twisted.internet.defer import Deferred, fail, succeed
 from twisted.python import failure
+from typing import Callable
 
 from txrpc.utils import as_deferred
 from loguru import logger
 
-class ServiceBase(object):
-    """A remoting service
-
-    attributes:
-    ============
-     * name - string, service name.
-     * runstyle
+class Service(object):
     """
-    SINGLE_STYLE = 1
-    PARALLEL_STYLE = 2
+        服务基类(远程,本地)
+    """
 
-    def __init__(self, name:str,runstyle = SINGLE_STYLE):
+    def __init__(self, name: str):
+        '''
+
+        :param name: 服务名称
+        :param runstyle:  运行模式 -单线程模式 -多线程模式
+        '''
         self._name = name
-        self._runstyle = runstyle
-        self.unDisplay = set()
-        self._lock = threading.RLock()
-        self._targets = {} # Keeps track of targets internally
+        self.unDisplay: Set[str] = set()
+        self._lock: threading.RLock = threading.RLock()
+        self._functions: Dict[str,Callable] = {} # Keeps track of targets internally
 
     def __iter__(self):
-        return iter(self._targets.keys())
+        return self._functions.__iter__()
 
-    def setName(self,name):
+    def setName(self,name: str):
+        '''
+            设置服务名称
+        :param name:
+        :return:
+        '''
         self._name = name
 
-    def addUnDisplayTarget(self,command):
-        '''Add a target unDisplay when client call it.'''
-        self.unDisplay.add(command)
+    def addUnDisplayFunction(self,functionName: str):
+        '''
+            将云函数加入黑名单
+        :param command:
+        :return:
+        '''
+        self.unDisplay.add(functionName)
 
-    def mapTarget(self, target):
-        """Add a target to the service."""
+    def mapFunction(self, f: Callable):
+        """
+            添加云函数到服务中
+        :param f:
+        :return:
+        """
         self._lock.acquire()
         try:
-            key = target.__name__
-            if key in self._targets.keys():
-                exist_target = self._targets.get(key)
-                logger.warning("target [%s] Already exists, [%s] will be covered by [%s]" % (key, exist_target.__class__.__name__, target.__class__.__name__))
-            logger.debug(f"Service:<{self._name}> {key} 注册成功")
-            self._targets[key] = target
+            key = f.__name__
+            if key in self._functions.keys():
+                exist_target = self._functions.get(key)
+                logger.warning("function [%s] Already exists, [%s] will be covered by [%s]" % (key, exist_target.__class__.__name__, f.__class__.__name__))
+            logger.debug(f"Service : <{self._name}> {key} 注册成功")
+            self._functions[key] = f
         finally:
             self._lock.release()
 
-    def unMapTarget(self, target):
-        """Remove a target from the service."""
+    def unMapFunction(self, f: Callable):
+        """
+            从服务中移除云函数
+        :param f:
+        :return:
+        """
         self._lock.acquire()
         try:
-            key = target.__name__
-            if key in self._targets:
-                del self._targets[key]
+            key = f.__name__
+            if key in self._functions:
+                del self._functions[key]
         finally:
             self._lock.release()
 
-    def unMapTargetByKey(self,targetKey):
-        """Remove a target from the service."""
+    def unMapFunctionByName(self,functionName):
+        """
+            通过云函数名称从服务中移除云函数
+        :param f:
+        :return:
+        """
         self._lock.acquire()
         try:
-            del self._targets[targetKey]
+            del self._functions[functionName]
         finally:
             self._lock.release()
 
-    def getTarget(self, targetKey):
-        """Get a target from the service by name."""
+    def getFunction(self, functionKey):
+        '''
+            从服务中获取云函数
+        :param functionKey:
+        :return:
+        '''
         self._lock.acquire()
         try:
             # logger.info("共有服务target：{}".format(self._targets))
-            target = self._targets.get(targetKey, None)
+            target = self._functions.get(functionKey, None)
         finally:
             self._lock.release()
         return target
 
-    def callTarget(self,targetKey,*args,**kwargs):
-        '''call Target
-        @param conn: client connection
-        @param targetKey: target ID
-        @param data: client data
+    def callFunction(self,functionName,*args,**kwargs):
         '''
-        # logger.debug("targetKey为：{}".format(targetKey))
-        # logger.debug("args为：{}".format(args))
-        # logger.debug("kwargs为：{}".format(kwargs))
-        if self._runstyle == self.SINGLE_STYLE:
-            result = self.callTargetSingle(targetKey,*args,**kwargs)
-        else:
-            result = self.callTargetParallel(targetKey,*args,**kwargs)
-        return result
+            通过云函数名称,调用云函数
+        :param functionName:
+        :param args:
+        :param kwargs:
+        :return:
+        '''
+        f = self.getFunction(functionName)
+        self._lock.acquire()
+        try:
+            if not f:
+                logger.error('the command ' + str(functionName) + ' not Found on service in ' + self._name)
+                return None
+            if functionName not in self.unDisplay:
+                logger.debug(f"RPC : <remote> call method <{functionName}> : <{f.__name__}> on service[single]")
 
-    def callTargetSingle(self,targetKey,*args,**kw):
-        '''call Target by Single
-        @param conn: client connection
-        @param targetKey: target ID
-        @param data: client data
+            defer_data = f(*args, **kwargs)
+            if isinstance(defer_data, defer.Deferred):
+                # logger.debug(f"{target.__name__} deferred")
+                d = defer_data
+            elif inspect.isawaitable(defer_data):
+                # logger.debug(f"{target.__name__} awaitable")
+                d = as_deferred(defer_data)
+            elif asyncio.coroutines.iscoroutine(defer_data):
+                # logger.debug(f"{target.__name__} coroutine")
+                d = defer.Deferred.fromCoroutine(defer_data)
+            elif isinstance(defer_data, failure.Failure):
+                # logger.debug(f"{target.__name__} failure")
+                d = fail(defer_data)
+            else:
+                # logger.debug(f"{target.__name__} succeed")
+                d = succeed(defer_data)
+        finally:
+            self._lock.release()
+        return d
+
+    def callFunctionSingle(self,functionName,*args,**kw):
         '''
-        target = self.getTarget(targetKey)
+            通过函数名称,进行云函数单线程调用
+        :param targetKey:
+        :param args:
+        :param kw:
+        :return:
+        '''
+        target = self.getFunction(functionName)
         self._lock.acquire()
         try:
             if not target:
-                # logger.error('the command ' + str(targetKey) + ' not Found on service in ' + self._name)
+                logger.error('the command ' + str(functionName) + ' not Found on service in ' + self._name)
                 return None
-            if targetKey in self.unDisplay:
-                # logger.error('the command ' + str(targetKey) + ' is in unDisplay list ' + self._name)
-                # logger.error(f"RPC : <remote> call method <{targetKey}> : <{target.__name__}> on service[single]")
-                return None
+            if functionName not in self.unDisplay:
+                logger.debug(f"RPC : <remote> call method <{functionName}> : <{target.__name__}> on service[single]")
 
             defer_data = target(*args,**kw)
             if isinstance(defer_data, defer.Deferred):
@@ -153,48 +199,57 @@ class ServiceBase(object):
             self._lock.release()
         return d
 
-    def callTargetParallel(self,targetKey,*args,**kw):
-        '''call Target by Single
-        @param conn: client connection
-        @param targetKey: target ID
-        @param data: client data
+    def callFunctionParallel(self,functionName,*args,**kw):
+        '''
+            通过函数名称,进行云函数多线程调用
+        :param functionName:
+        :param args:
+        :param kw:
+        :return:
         '''
         self._lock.acquire()
         try:
-            target = self.getTarget(targetKey)
-            if not target:
-                logger.error('the command ' + str(targetKey) + ' not Found on service in ' + self._name)
+            f = self.getFunction(functionName)
+            if not f:
+                logger.error('the command ' + str(functionName) + ' not Found on service in ' + self._name)
                 return None
-            # logger.debug("RPC : <remote> call method <%s> on service[parallel]" % target.__name__)
-            d = threads.deferToThread(target,*args,**kw)
+            logger.debug("RPC : <remote> call method <%s> on service[parallel]" % f.__name__)
+            d = threads.deferToThread(f,*args,**kw)
         finally:
             self._lock.release()
         return d
 
-class Service(ServiceBase):
-    """A remoting service
-    According to Command ID search target
-    """
-    def mapTarget(self, target):
-        """Add a target to the service."""
+class CommandService(Service):
+
+    def mapFunction(self, f: Callable):
+        """
+            添加云函数到服务中
+                云函数名称格式为 {command}__{function_name}
+        :param f:
+        :return:
+        """
         self._lock.acquire()
         try:
-            key = (target.__name__).split('__')[-1]
-            if key in self._targets.keys():
-                exist_target = self._targets.get(key)
-                logger.warning("target [%s] Already exists, [%s] will be covered by [%s]" % (key, exist_target.__class__.__name__, target.__class__.__name__))
-            logger.debug("当前服务器 CommandService:<{}> {} 注册成功".format(self._name, key))
-            self._targets[key] = target
+            key = (f.__name__).split('__')[-1]
+            if key in self._functions.keys():
+                exist_target = self._functions.get(key)
+                logger.warning("function [%s] Already exists, [%s] will be covered by [%s]" % (key, exist_target.__class__.__name__, f.__class__.__name__))
+            logger.debug(f"Command Service:<{self._name}> {key} 注册成功")
+            self._functions[key] = f
         finally:
             self._lock.release()
 
-    def unMapTarget(self, target):
-        """Remove a target from the service."""
+    def unMapTarget(self, f: Callable):
+        """
+            从服务中移除云函数
+        :param f:
+        :return:
+        """
         self._lock.acquire()
         try:
-            key = (target.__name__).split('__')[-1]
-            if key in self._targets:
-                del self._targets[key]
+            key = (f.__name__).split('__')[-1]
+            if key in self._functions:
+                del self._functions[key]
         finally:
             self._lock.release()
 

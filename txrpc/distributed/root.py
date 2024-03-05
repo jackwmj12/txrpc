@@ -23,25 +23,25 @@ Created on 2019-11-22
 from twisted.internet import defer
 from twisted.internet.defer import Deferred
 from twisted.spread import pb
-from txrpc.distributed.child import Child
+from txrpc.distributed.child import NodeChild
 from txrpc.distributed.manager import NodeManager
-
-from txrpc.service.service import Service
+from txrpc.globalobject import GlobalObject
+from txrpc.service.service import CommandService, Service
 from loguru import logger
 
 
 class BilateralBroker(pb.Broker):
-    
+    '''
+
+    '''
     def connectionLost(self, reason):
         clientID = self.transport.sessionno
-        # logger.info("node [%d] lose"%clientID)
-        d = self.factory.root.dropChildById(clientID)
+        d = self.factory.root.rootDropLeafById(clientID)
         d.addCallback(lambda ign : pb.Broker.connectionLost(self, reason))
 
 class BilateralFactory(pb.PBServerFactory):
     
     protocol = BilateralBroker
-    
 
 class PBRoot(pb.Root):
     '''PB 代理服务器'''
@@ -51,104 +51,103 @@ class PBRoot(pb.Root):
             初始化根节点
         '''
         self.dnsmanager: NodeManager = dnsmanager
-        self.service: Service = None
-        self.childConnectService = Service("child_connect_service")
-        self.childLostConnectService = Service("child_lost_connect_service")
+        self.rootService: Service = None
         
-    def addServiceChannel(self,service : Service):
+    def rootAddServiceChannel(self,service : Service):
         '''
             添加服务通道
         @param service: Service Object(In bilateral.services)
         '''
-        self.service : Service = service
+        self.rootService: Service = service
 
-    def doChildConnect(self,name,transport) -> Deferred:
+    def rootDoLeafConnect(self,name,transport) -> Deferred:
         """
             当node节点连接时的处理
         :param name: 子节点名称
         :param transport:  子节点句柄
         :return:
         """
-        defer_list = []
+        deferList = []
         try:
-            # logger.debug("node [%s] connect" % name)
-            for service in self.childConnectService:
-                # logger.debug("service [%s] connect" % service)
-                defer_list.append(
-                    self.childConnectService.callTarget(service, name, transport)
+            logger.debug("node [%s] connect" % name)
+            for service in GlobalObject().rootRecvConnectService:
+                # 遍历注册的 子节点连接服务(函数)并调用
+                deferList.append(
+                    GlobalObject().rootRecvConnectService.callFunction(service,name,transport)
                 )
         except Exception as e:
             logger.error(str(e))
-        return defer.DeferredList(defer_list,consumeErrors=True)
+        return defer.DeferredList(deferList,consumeErrors=True)
             
-    def doChildLostConnect(self,childId) -> Deferred:
+    def rootDoLeafLostConnect(self,childId) -> Deferred:
         """
             当node节点断开时的处理
         :param childId:  子节点ID
         :return:
         """
-        defer_list = []
+        deferList = []
         try:
-            # logger.debug("node [%s] lose" % childId)
-            # del GlobalObject().remote_map[childId]
-            for service in self.childLostConnectService:
-                defer_list.append(self.childLostConnectService.callTarget(service,childId))
+            logger.debug("node [%s] lose" % childId)
+            for service in GlobalObject().rootLostConnectService:
+                # 遍历注册的 子节点断开连接服务(函数)并调用
+                deferList.append(GlobalObject().rootLostConnectService.callFunction(service,childId))
         except Exception as e:
             logger.error(str(e))
-        return defer.DeferredList(defer_list, consumeErrors=True)
+        return defer.DeferredList(deferList, consumeErrors=True)
 
-    def dropChild(self,*args,**kw):
+    def rootDropLeaf(self,*args,**kw):
         '''
-        删除子节点记录
+            删除子节点记录
         '''
-        self.dnsmanager.dropChild(*args,**kw)
+        self.dnsmanager.dropNodeChild(*args,**kw)
         
-    def dropChildById(self,childId) -> Deferred:
+    def rootDropLeafById(self,childId) -> Deferred:
         '''
             根据ID删除子节点记录
         :param childId:
         :return:
         '''
-        if self.dnsmanager.dropChildById(childId):
-            return self.doChildLostConnect(childId)
+        if self.dnsmanager.dropNodeChildByID(childId):
+            return self.rootDoLeafLostConnect(childId)
         else:
-            return self.doChildLostConnect(None)
+            return self.rootDoLeafLostConnect(None)
     
-    def callChildByName(self,childname,*args,**kw)->Deferred:
+    def rootCallLeafByName(self,childname,*args,**kw)->Deferred:
         '''
-            通过节点组名称调用子节点的接口,节点管理器会根据权重随机调用节点
+            通过节点组名称调用子节点的接口
+            节点管理器会根据权重随机调用同名节点
         @param childname: str 子节点组的名称
         '''
-        return self.dnsmanager.callChildByName(childname,*args,**kw)
+        return self.dnsmanager.callNodeChildByName(childname,*args,**kw)
     
-    def callChildById(self,childId,*args,**kw)->Deferred:
+    def rootCallLeafByID(self,childId,*args,**kw)->Deferred:
         '''
             通过子节点的唯一ID调用子节点的接口
         @param childId: int 子节点的id
         return Defered Object
         '''
-        return self.dnsmanager.callChildById(childId,*args,**kw)
+        return self.dnsmanager.callNodeChildByID(childId,*args,**kw)
     
     def remote_takeProxy(self,name,weight,transport):
         '''
-        设置代理通道
+            设置代理通道
+            子节点和根节点建立连接后,通过该remote函数,设置并提交代理通道
+            后续根节点通过该代理通道进行子节点调用
         @param addr: (hostname,port)hostname 根节点的主机名,根节点的端口
         '''
         logger.debug('node [%s] takeProxy ready' % (name))
-        child = Child(transport.broker.transport.sessionno,name)
+        child = NodeChild(transport.broker.transport.sessionno,name)
         child.setWeight(weight)
-        self.dnsmanager.addChild(child)
-        # logger.debug(self.dnsmanager._children.get("client").children)
-        # logger.debug(self.dnsmanager._children.get("client").hand)
-        # logger.debug(self.dnsmanager._children.get("client").handCur)
         child.setTransport(transport)
-        return self.doChildConnect(name,transport)
+        self.dnsmanager.addNodeChild(child)
+        return self.rootDoLeafConnect(name,transport)
         
-    def remote_callTarget(self, command, *args, **kw):
+    def remote_callFunction(self, command, *args, **kw):
         '''
-        远程调用方法
+            远程调用方法
+            子节点通过该remote函数,进行root节点的服务调用
         @param commandId: 指令号
         @param data: str 调用参数
         '''
-        data = self.service.callTarget(command, *args, **kw)
+        data = self.rootService.callFunction(command, *args, **kw)
         return data

@@ -23,39 +23,42 @@ Created on 2019-11-22
 
 from twisted.spread import pb
 from twisted.internet import defer
+from typing import Union
+
 from txrpc.distributed.reference import ProxyReference
+from txrpc.globalobject import GlobalObject
 from txrpc.service.service import Service
 from loguru import logger
 
 class RpcClientFactory(pb.PBClientFactory):
 
-    def setRemoteObject(self, remoteObject):
-        setattr(self, "remoteObject", remoteObject)
-        return self
-
-    def getRemoteObject(self):
-        return getattr(self, "remoteObject", None)
+    def __init__(self, name: str):
+        super().__init__()
+        self.name = name
 
     def clientConnectionLost(self, connector, reason, reconnecting=0):
         super().clientConnectionLost(connector, reason, reconnecting)
-
-        remote_obj = self.getRemoteObject()
-        if remote_obj:
-            return remote_obj.doWhenDisconnect()
-
-    def clientConnectionFailed(self, connector, reason):
-        super().clientConnectionFailed(connector, reason)
-
-        remote_obj = self.getRemoteObject()
-        if remote_obj:
-            return remote_obj.doWhenConnectFailed()
+        deferList = []
+        if GlobalObject().leafLostConnectServiceMap.get(self.name, None):
+            for service in GlobalObject().leafLostConnectServiceMap.get(self.name, None):
+                deferList.append(GlobalObject().leafLostConnectServiceMap.get(self.name).callFunction(service))
+        return defer.DeferredList(deferList, consumeErrors=True)
 
     def clientConnectionMade(self, broker):
         super().clientConnectionMade(broker)
+        deferList = []
+        if GlobalObject().leafConnectSuccessServiceMap.get(self.name, None):
+            for service in GlobalObject().leafConnectSuccessServiceMap.get(self.name, None):
+                deferList.append(GlobalObject().leafConnectSuccessServiceMap.get(self.name).callFunction(service))
+        return defer.DeferredList(deferList, consumeErrors=True)
 
-        remote_obj = self.getRemoteObject()
-        if remote_obj:
-            return remote_obj.doWhenConnect()
+    def clientConnectionFailed(self, connector, reason):
+        super().clientConnectionFailed(connector, reason)
+        deferList = []
+        if GlobalObject().leafConnectFailedServiceMap.get(self.name, None):
+            for service in GlobalObject().leafConnectFailedServiceMap.get(self.name, None):
+                deferList.append(GlobalObject().leafConnectFailedServiceMap.get(self.name).callFunction(service))
+        return defer.DeferredList(deferList, consumeErrors=True)
 
 class RemoteObject(object):
     '''远程调用对象'''
@@ -65,23 +68,40 @@ class RemoteObject(object):
         @param port: int 远程分布服的端口号
         @param rootaddr: 根节点服务器地址
         '''
+        self._id = ""
         self._name = name
-        self._weight = 10
-        # pb的客户端，客户端可以执行server端的remote方法
-        self._factory = RpcClientFactory().setRemoteObject(self)
+        self._weight: int = 10
+        self._factory = RpcClientFactory(name)  # pb的客户端，客户端可以执行server端的remote方法
         self._reference = ProxyReference()  # 创建代理通道，该通道包含添加服务，代理发送数据功能
-        self._addr = None
-        
-        self.connectedService = Service("connected_service")
-    
-    def setName(self,name):
-        '''设置节点的名称'''
-        self._name = name
-        
+        self._addr: Union[str, None] = None
+        # self._config: Dict = {}
+        # self.connectedService = CommandService("connected_service")
+
+    def __str__(self):
+        if  not self._id :
+            return self._name
+        return ":".join([self._name, self._id])
+
+    def __repr__(self):
+        if  not self._id :
+            return self._name
+        return ":".join([self._name,self._id])
+
     def getName(self):
         '''获取节点的名称'''
         return self._name
-        
+
+    def setName(self, name: str) -> "RemoteObject":
+        '''设置节点的名称'''
+        self._name = name
+        return self
+
+    def getID(self):
+        return self._id
+
+    def getRemoteName(self):
+        return ":".join([self._name,self._id])
+
     def getWeight(self):
         '''
             获取节点权重
@@ -134,27 +154,7 @@ class RemoteObject(object):
         '''
         logger.debug(f"RPC : call <remote> method <{commandId}> with args = {args} kwargs = {kw}")
         deferedRemote = self._factory.getRootObject()
-        return deferedRemote.addCallback(_callRemote,'callTarget',commandId,*args,**kw)
-
-    def doWhenConnect(self):
-        '''
-            连接成功后触发
-            :param
-        '''
-        for service in self.connectedService:
-            self.connectedService.callTarget(service)
-
-    def doWhenDisconnect(self):
-        '''
-            连接成功后触发
-            :param
-        '''
-
-    def doWhenConnectFailed(self):
-        '''
-            连接失败后触发
-        :return:
-        '''
+        return deferedRemote.addCallback(_callRemote,'callFunction',commandId, *args, **kw)
         
 def _callRemote(remoteObject: RemoteObject, funcName: str, *args, **kw):
     '''

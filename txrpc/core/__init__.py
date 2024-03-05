@@ -37,18 +37,18 @@ from loguru import logger
 
 
 class RPC():
+    '''
+        RPC 基类
+    '''
 
     def __init__(self, name: str = None):
         '''
-                :return
+            :return
         '''
-        GlobalObject().node = self
-        self.name = name
-        self.local_service_path: Union[List[str], None] = GlobalObject().config.get("DISTRIBUTED").get(self.name).get("LOCAL_APP")  # 本地服务路径
-        self.remote_service_path: Union[List[str], None] = GlobalObject().config.get("DISTRIBUTED").get(self.name).get("REMOTE_APP")  # 远程服务路径
-        self.startService = Service("startservice")  # 程序开始时运行
-        self.stopService = Service("endservice")    # 程序结束时运行(暂无实现)
-        self.reloadService = Service("reloadservice")  # 程序重载时运行
+        self.servicePath: Union[List[str], None] = None  # 服务的py文件路径
+
+        from twisted.internet import reactor
+        reactor.callWhenRunning(self._doWhenStart)  # 注册开始运行函数
 
     def run(self):
         '''
@@ -95,64 +95,40 @@ class RPC():
                 "TWISTED_THREAD_POOL",
                 8))  # 设置线程池数量
 
-    def startServiceHandle(self, target):
-        """
-                注册程序停止触发函数的handler
-        :param target: 函数
-        :return:
-        """
-        self.startService.mapTarget(target)
-
-    def stopServiceHandle(self, target):
-        """
-                注册程序停止触发函数的handler
-        :param target: 函数
-        :return:
-        """
-        self.stopService.mapTarget(target)
-
-    def reloadServiceHandle(self, target):
-        """
-                注册程序重载触发函数的handler
-        :param target: 函数
-        :return:
-        """
-        self.reloadService.mapTarget(target)
-
     def _doWhenStart(self) -> defer.Deferred:
         '''
                 程序开始时,将会运行该函数
         :return:
         '''
-        self.registerService(self.local_service_path)  # 重载本地服务
-        # self.registerService(self.remote_service_path)
-        # 注意! remote_servic
-        # 该服务必须在RPC连接成功后调用,而非程序启动调用
 
-        defer_list = []
-        for service in self.startService:
-            defer_list.append(self.startService.callTarget(service))
-        return defer.DeferredList(defer_list, consumeErrors=True)
+        deferList = []
+        for service in GlobalObject().startService:
+            deferList.append(
+                GlobalObject().startService.callFunction(service)
+            )
+        return defer.DeferredList(deferList, consumeErrors=True)
 
     def _doWhenStop(self) -> defer.Deferred:
         '''
                 程序停止时,将会运行该服务
         :return:
         '''
-        defer_list = []
-        for service in self.stopService:
-            defer_list.append(self.stopService.callTarget(service))
-        return defer.DeferredList(defer_list, consumeErrors=True)
+        deferList = []
+        for service in GlobalObject().stopService:
+            deferList.append(
+                GlobalObject().stopService.callFunction(service)
+            )
+        return defer.DeferredList(deferList, consumeErrors=True)
 
     def _doWhenReload(self) -> defer.Deferred:
         '''
                 程序重载时,将会运行该服务
         :return:
         '''
-        self.registerService(self.remote_service_path)  # 重载RPC远程服务
-        self.registerService(self.local_service_path)  # 重载本地服务
-
-        defer_list = []
-        for service in self.reloadService:
-            defer_list.append(self.reloadService.callTarget(service))
-        return defer.DeferredList(defer_list, consumeErrors=True)
+        self.registerService(self.servicePath)
+        deferList = []
+        for service in GlobalObject().reloadService:
+            deferList.append(
+                GlobalObject().reloadService.callFunction(service)
+            )
+        return defer.DeferredList(deferList, consumeErrors=True)

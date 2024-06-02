@@ -172,7 +172,7 @@ class NodeManager(object):
         '''
         if name:
             node: Node = self._nodes.get(name)
-            logger.debug(f"NODE 获取成功 {node}")
+            # logger.debug(f"NODE 获取成功 {node}")
             if node:
                 return node.getChild()
         return None

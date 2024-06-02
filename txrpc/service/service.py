@@ -26,9 +26,7 @@ import threading
 from twisted.internet import defer,threads
 from twisted.internet.defer import Deferred, fail, succeed
 from twisted.python import failure
-from typing import Callable, Set, Dict
-
-from txrpc.utils import as_deferred
+from typing import Callable, Set, Dict, Any
 from loguru import logger
 
 class Service(object):
@@ -123,101 +121,141 @@ class Service(object):
             self._lock.release()
         return target
 
-    def callFunction(self,functionName,*args,**kwargs):
+    def callFunction(self,functionName,*args,**kwargs) -> Any:
         '''
-            通过云函数名称,调用云函数
+            调用服务下挂载的方法,且强制转化为deferred对象
         :param functionName:
         :param args:
         :param kwargs:
         :return:
         '''
         f = self.getFunction(functionName)
-        self._lock.acquire()
-        try:
-            if not f:
-                logger.error('the command ' + str(functionName) + ' not Found on service in ' + self._name)
-                return None
-            if functionName not in self.unDisplay:
-                logger.debug(f"RPC : <remote> call method <{functionName}> : <{f.__name__}> on service[single]")
-
-            defer_data = f(*args, **kwargs)
-            if isinstance(defer_data, defer.Deferred):
-                # logger.debug(f"{target.__name__} deferred")
-                d = defer_data
-            elif inspect.isawaitable(defer_data):
-                # logger.debug(f"{target.__name__} awaitable")
-                d = as_deferred(defer_data)
-            elif asyncio.coroutines.iscoroutine(defer_data):
-                # logger.debug(f"{target.__name__} coroutine")
-                d = defer.Deferred.fromCoroutine(defer_data)
-            elif isinstance(defer_data, failure.Failure):
-                # logger.debug(f"{target.__name__} failure")
-                d = fail(defer_data)
-            else:
-                # logger.debug(f"{target.__name__} succeed")
-                d = succeed(defer_data)
-        finally:
-            self._lock.release()
+        if not f or functionName in self.unDisplay:
+            err_msg = f'the command <{functionName}> not Found on service<{self._name}>'
+            logger.error(err_msg)
+            d = fail(err_msg)
+        else:
+            try:
+                self._lock.acquire()
+                # if functionName not in self.unDisplay:
+                #     logger.debug(f"RPC : <remote> call method <{functionName}> : <{f.__name__}> on service[single]")
+                defer_result = f(*args, **kwargs)
+                if isinstance(defer_result, defer.Deferred):
+                    # logger.debug(f"callFunction <{functionName}> deferred")
+                    d = defer_result
+                elif inspect.isawaitable(defer_result): #
+                    # logger.debug(f"callFunction <{functionName}> awaitable")
+                    d = Deferred.fromFuture(asyncio.ensure_future(defer_result))
+                elif asyncio.coroutines.iscoroutine(defer_result):
+                    # logger.debug(f"callFunction <{functionName}> coroutine")
+                    d = defer.ensureDeferred(defer_result)
+                else:
+                    # logger.debug(f"callFunction <{functionName}> else")
+                    d = succeed(defer_result)
+            except Exception as e:
+                logger.error(e)
+                d = fail(e)
+            finally:
+                self._lock.release()
         return d
 
-    def callFunctionSingle(self,functionName,*args,**kw):
+    def callFunctionEnsureDeferred(self,functionName,*args,**kwargs) -> Deferred:
         '''
-            通过函数名称,进行云函数单线程调用
-        :param targetKey:
-        :param args:
-        :param kw:
-        :return:
-        '''
-        target = self.getFunction(functionName)
-        self._lock.acquire()
-        try:
-            if not target:
-                logger.error('the command ' + str(functionName) + ' not Found on service in ' + self._name)
-                return None
-            if functionName not in self.unDisplay:
-                logger.debug(f"RPC : <remote> call method <{functionName}> : <{target.__name__}> on service[single]")
-
-            defer_data = target(*args,**kw)
-            if isinstance(defer_data, defer.Deferred):
-                # logger.debug(f"{target.__name__} deferred")
-                d = defer_data
-            elif inspect.isawaitable(defer_data):
-                # logger.debug(f"{target.__name__} awaitable")
-                d = as_deferred(defer_data)
-            elif asyncio.coroutines.iscoroutine(defer_data):
-                # logger.debug(f"{target.__name__} coroutine")
-                d = defer.Deferred.fromCoroutine(defer_data)
-            elif isinstance(defer_data, failure.Failure):
-                # logger.debug(f"{target.__name__} failure")
-                d = fail(defer_data)
-            else:
-                # logger.debug(f"{target.__name__} succeed")
-                d = succeed(defer_data)
-            # d = defer.Deferred()
-            # d.callback(defer_data)
-        finally:
-            self._lock.release()
-        return d
-
-    def callFunctionParallel(self,functionName,*args,**kw):
-        '''
-            通过函数名称,进行云函数多线程调用
+            调用服务下挂载的方法,且强制转化为deferred对象(一般用于deferredList)
         :param functionName:
         :param args:
-        :param kw:
+        :param kwargs:
         :return:
         '''
-        self._lock.acquire()
-        try:
-            f = self.getFunction(functionName)
-            if not f:
-                logger.error('the command ' + str(functionName) + ' not Found on service in ' + self._name)
-                return None
-            logger.debug("RPC : <remote> call method <%s> on service[parallel]" % f.__name__)
-            d = threads.deferToThread(f,*args,**kw)
-        finally:
-            self._lock.release()
+        f = self.getFunction(functionName)
+        if not f or functionName in self.unDisplay:
+            err_msg = f'the command <{functionName}> not Found on service<{self._name}>'
+            logger.error(err_msg)
+            d = fail(err_msg)
+        else:
+            try:
+                self._lock.acquire()
+                # if functionName not in self.unDisplay:
+                #     logger.debug(f"RPC : <remote> call method <{functionName}> : <{f.__name__}> on service[single]")
+                defer_result = f(*args, **kwargs)
+                if isinstance(defer_result, defer.Deferred):
+                    # logger.debug(f"callFunctionEnsureDeferred <{functionName}> deferred")
+                    d = defer_result
+                elif inspect.isawaitable(defer_result):
+                    # logger.debug(f"callFunctionEnsureDeferred <{functionName}> awaitable")
+                    d = Deferred.fromFuture(asyncio.ensure_future(defer_result))
+                elif asyncio.coroutines.iscoroutine(defer_result):
+                    # logger.debug(f"callFunctionEnsureDeferred <{functionName}> coroutine")
+                    d = defer.ensureDeferred(defer_result)
+                else:
+                    d = succeed(defer_result)
+            except Exception as e:
+                logger.error(e)
+                d = fail(None)
+            finally:
+                self._lock.release()
         return d
+
+    # def callFunctionSingle(self,functionName,*args,**kw):
+    #     '''
+    #         通过函数名称,进行云函数单线程调用
+    #     :param targetKey:
+    #     :param args:
+    #     :param kw:
+    #     :return:
+    #     '''
+    #     f = self.getFunction(functionName)
+    #     self._lock.acquire()
+    #     try:
+    #         if not f or functionName in self.unDisplay:
+    #             # logger.error(f'the command <{functionName}> not Found on service<{self._name}>')
+    #             d = None
+    #         # if functionName not in self.unDisplay:
+    #         #     logger.debug(f"RPC : <remote> call method <{functionName}> : <{f.__name__}> on service[single]")
+    #         # logger.debug("RPC : <remote> call method <%s> on service[single]" % f.__name__)
+    #         else:
+    #             defer_data = f(*args, **kw)
+    #             if isinstance(defer_data, defer.Deferred):
+    #                 # logger.debug(f"callFunctionSingle <{functionName}> deferred")
+    #                 d = defer_data
+    #             elif inspect.isawaitable(defer_data):
+    #                 # logger.debug(f"callFunctionSingle <{functionName}> awaitable")
+    #                 d = Deferred.fromFuture(asyncio.ensure_future(defer_data))
+    #             elif asyncio.coroutines.iscoroutine(defer_data):
+    #                 # logger.debug(f"callFunctionSingle <{functionName}> coroutine")
+    #                 d = defer.Deferred.fromCoroutine(defer_data)
+    #             # elif isinstance(defer_data, failure.Failure):
+    #             #     logger.debug(f"callFunction <{functionName}> failure")
+    #             #     d = fail(defer_data)
+    #             # else:
+    #             #     logger.debug(f"callFunction <{functionName}> succeed")
+    #             #     d = succeed(defer_data)
+    #             else:
+    #                 # logger.debug(f"callFunctionSingle <{functionName}> else")
+    #                 d = defer_data
+    #     finally:
+    #         self._lock.release()
+    #     return d
+    #
+    # def callFunctionParallel(self,functionName,*args,**kw):
+    #     '''
+    #         通过函数名称,进行云函数多线程调用
+    #     :param functionName:
+    #     :param args:
+    #     :param kw:
+    #     :return:
+    #     '''
+    #     self._lock.acquire()
+    #     try:
+    #         f = self.getFunction(functionName)
+    #         if not f:
+    #             # logger.error(f'the command {functionName} not Found on service<{self._name}>')
+    #             return None
+    #         logger.debug("RPC : <remote> call method <%s> on service[parallel]" % f.__name__)
+    #         d = threads.deferToThread(f,*args,**kw)
+    #     finally:
+    #         self._lock.release()
+    #     return d
 
 class CommandService(Service):
 

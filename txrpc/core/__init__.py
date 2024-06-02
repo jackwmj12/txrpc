@@ -59,7 +59,8 @@ class RPC():
                 :return
         '''
         from twisted.internet import reactor
-        reactor.callWhenRunning(self._doWhenStart)
+        reactor.addSystemEventTrigger('after', 'startup', self._doWhenStart)
+        reactor.addSystemEventTrigger('before', 'shutdown', self._doWhenStop)
         reactor.run()
 
     def prepare(self):
@@ -67,7 +68,8 @@ class RPC():
                 :param
         '''
         from twisted.internet import reactor
-        reactor.callWhenRunning(self._doWhenStart)
+        reactor.addSystemEventTrigger('after', 'startup', self._doWhenStart)
+        reactor.addSystemEventTrigger('before', 'shutdown', self._doWhenStop)
 
     def registerService(self, servicePath: Union[List[str], str, None]):
         '''
@@ -108,7 +110,7 @@ class RPC():
         deferList = []
         for service in GlobalObject().startService:
             deferList.append(
-                GlobalObject().startService.callFunction(service)
+                GlobalObject().startService.callFunctionEnsureDeferred(service)
             )
         return defer.DeferredList(deferList, consumeErrors=True)
 
@@ -120,7 +122,7 @@ class RPC():
         deferList = []
         for service in GlobalObject().stopService:
             deferList.append(
-                GlobalObject().stopService.callFunction(service)
+                GlobalObject().stopService.callFunctionEnsureDeferred(service)
             )
         return defer.DeferredList(deferList, consumeErrors=True)
 
@@ -133,6 +135,6 @@ class RPC():
         deferList = []
         for service in GlobalObject().reloadService:
             deferList.append(
-                GlobalObject().reloadService.callFunction(service)
+                GlobalObject().reloadService.callFunctionEnsureDeferred(service)
             )
         return defer.DeferredList(deferList, consumeErrors=True)

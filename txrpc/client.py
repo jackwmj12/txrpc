@@ -91,8 +91,8 @@ class RPCClient(RPC):
         # 创建远程对象实例
         remote = RemoteObject(name, remoteName)
         remote.setWeight(weight)
-        # 远程对象存入 leafRemoteMap
-        GlobalObject().leafRemoteMap[remoteName] = remote
+        # 远程对象存入 rootRemoteMap
+        GlobalObject().rootRemoteMap[remoteName] = remote
         # 创建连接
         d = remote.connect(
             (host, port)
@@ -103,18 +103,18 @@ class RPCClient(RPC):
         )
         return d
 
-    @staticmethod
-    def callRemote(remoteName: str, functionName: str, *args, **kwargs):
-        '''
-                调用远端节点
-        :param remoteName: 节点名称
-        :param functionName:  函数名称
-        :param args:  参数1
-        :param kwargs:  参数2
-        :return:
-        '''
-        return GlobalObject().callRoot(
-            remoteName,
-            functionName,
-            *args, **kwargs
-        )
+    # @staticmethod
+    # def callRemote(remoteName: str, functionName: str, *args, **kwargs):
+    #     '''
+    #             调用远端节点
+    #     :param remoteName: 节点名称
+    #     :param functionName:  函数名称
+    #     :param args:  参数1
+    #     :param kwargs:  参数2
+    #     :return:
+    #     '''
+    #     return GlobalObject().callRoot(
+    #         remoteName,
+    #         functionName,
+    #         *args, **kwargs
+    #     )

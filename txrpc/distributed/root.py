@@ -26,7 +26,7 @@ from twisted.spread import pb
 from txrpc.distributed.child import NodeChild
 from txrpc.distributed.manager import NodeManager
 from txrpc.globalobject import GlobalObject
-from txrpc.service.service import CommandService, Service
+from txrpc.service.service import CommandService as Service
 from loguru import logger
 
 
@@ -68,15 +68,15 @@ class PBRoot(pb.Root):
         :return:
         """
         deferList = []
+        logger.debug("node [%s] connect" % name)
         try:
-            logger.debug("node [%s] connect" % name)
             for service in GlobalObject().rootRecvConnectService:
                 # 遍历注册的 子节点连接服务(函数)并调用
                 deferList.append(
-                    GlobalObject().rootRecvConnectService.callFunction(service,name,transport)
+                    GlobalObject().rootRecvConnectService.callFunctionEnsureDeferred(service, name, transport)
                 )
         except Exception as e:
-            logger.error(str(e))
+            logger.error(e)
         return defer.DeferredList(deferList,consumeErrors=True)
             
     def rootWhenLeafLostConnect(self,childId) -> Deferred:
@@ -86,13 +86,13 @@ class PBRoot(pb.Root):
         :return:
         """
         deferList = []
+        logger.debug("node [%s] lose" % childId)
         try:
-            logger.debug("node [%s] lose" % childId)
             for service in GlobalObject().rootLostConnectService:
                 # 遍历注册的 子节点断开连接服务(函数)并调用
-                deferList.append(GlobalObject().rootLostConnectService.callFunction(service,childId))
+                deferList.append(GlobalObject().rootLostConnectService.callFunctionEnsureDeferred(service,childId))
         except Exception as e:
-            logger.error(str(e))
+            logger.error(e)
         return defer.DeferredList(deferList, consumeErrors=True)
 
     def dropLeaf(self,*args,**kw):
@@ -112,7 +112,7 @@ class PBRoot(pb.Root):
         else:
             return self.rootWhenLeafLostConnect(None)
     
-    def callLeafByName(self,childname,*args,**kw)->Deferred:
+    def callLeafByName(self,childname,*args,**kw)-> Deferred:
         '''
             通过节点组名称调用子节点的接口
             节点管理器会根据权重随机调用同名节点
@@ -120,7 +120,7 @@ class PBRoot(pb.Root):
         '''
         return self.dnsmanager.callNodeChildByName(childname,*args,**kw)
     
-    def callLeafByID(self,childId,*args,**kw)->Deferred:
+    def callLeafByID(self,childId,*args,**kw)-> Deferred:
         '''
             通过子节点的唯一ID调用子节点的接口
         @param childId: int 子节点的id

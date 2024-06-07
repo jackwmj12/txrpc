@@ -157,12 +157,13 @@ class RemoteObject(object):
         '''
             远程调用
         '''
+        # logger.debug(f"RPC : call <remote> method <{commandId}>")
         logger.debug(f"RPC : call <remote> method <{commandId}> with args = {args} kwargs = {kw}")
         d = self._factory.getRootObject()
         # logger.debug(f"callRemote<{commandId}> ======================> {d}|<{type(d)}>")
         d.addCallback(
             _callRemote, 'callFunction', commandId, *args, **kw
-        ).addErrback(logger.error)
+        )
         # logger.debug(f"callRemote<{commandId}> ======================> {d}|<{type(d)}>")
         return d
         # return self._factory.getRootObject().addCallback(
